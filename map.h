@@ -8,14 +8,36 @@
 typedef struct map
 {
     int **map;
-    unsigned int rank;
-    unsigned int rows, cols;
-    unsigned int nbTrees, nbMonsters, nbPlants, nbRocs;
-    unsigned int lvlRequired;
+    int rank;
+    int rows, cols;
+    int nbTrees, nbMonsters, nbPlants, nbRocs;
+    int lvlRequired;
 }map;
 
+int getXPlayerPos(map *myMap){
+    for(int i = 0; i < myMap->rows; i++){
+        for(int j = 0; j < myMap->cols; j++){
+            if(myMap->map[i][j] == 1) {
+                return i;
+            }
+        }
+    }
+    return 0;
+}
+
+int getYPlayerPos(map *myMap){
+    for(int i = 0; i < myMap->rows; i++){
+        for(int j = 0; j < myMap->cols; j++){
+            if(myMap->map[i][j] == 1) {
+                return j;
+            }
+        }
+    }
+    return 0;
+}
+
 void putTrees(map *myMap){
-    unsigned int nbTrees, x, y, i, val;
+    int nbTrees, x, y, i, val;
     // NUMBER OF TREES DEPENDS ON THE RANK OF THE MAP
     nbTrees = myMap->nbTrees;
     i = 0;
@@ -37,7 +59,7 @@ void putTrees(map *myMap){
 }
 
 void putMonsters(map *myMap){
-    unsigned int nbMonsters, x, y, i, min_val, max_val, randMonster;
+    int nbMonsters, x, y, i, min_val, max_val, randMonster;
     // NUMBER OF MONSTERS DEPENDS ON THE RANK OF THE MAP
     nbMonsters = myMap->nbMonsters;
     i = 0;
@@ -63,7 +85,7 @@ void putMonsters(map *myMap){
 }
 
 void putPlants(map *myMap){
-    unsigned int nbPlants, x, y, i, val;
+    int nbPlants, x, y, i, val;
     // NUMBER OF PLANTS DEPENDS ON THE RANK OF THE MAP
     nbPlants = myMap->nbPlants;
     i = 0;
@@ -85,7 +107,7 @@ void putPlants(map *myMap){
 }
 
 void putTpCases(map *myMap){
-    unsigned int x, y, i, val, nbOfTpCases;
+    int x, y, i, val, nbOfTpCases;
     // NUMBER OF TREES DEPENDS OF THE RANK OF THE MAP
     nbOfTpCases = myMap->nbTrees;
     i = 0;
@@ -126,7 +148,7 @@ void putTpCases(map *myMap){
 }
 
 void putRocs(map *myMap){
-    unsigned int nbRocs, x, y, i, val;
+    int nbRocs, x, y, i, val;
     // NUMBER OF ROCS DEPENDS ON THE RANK OF THE MAP
     nbRocs = myMap->nbPlants;
     i = 0;
@@ -148,7 +170,7 @@ void putRocs(map *myMap){
 }
 
 void putPnj(map *myMap){
-    unsigned int i, x, y;
+    int i, x, y;
     i = 0;
 
     while(i<1){
@@ -163,7 +185,7 @@ void putPnj(map *myMap){
 }
 
 void putPlayer(map *myMap){
-    unsigned int i, x, y;
+    int i, x, y;
     i = 0;
 
     while(i<1){
@@ -184,10 +206,9 @@ void putAll(map *myMap){
     putMonsters(myMap);
     putTpCases(myMap);
     putPnj(myMap);
-    putPlayer(myMap);
 }
 
-map *initMap(unsigned int l, unsigned int c, unsigned int rank){
+map *initMap(int l, int c, int rank){
     // CREATING MAP TAB OF TABS ALLOCATING INT TAB FIRSTLY ...
     map *myMap = malloc(sizeof(myMap));
     assert(myMap);
@@ -202,12 +223,12 @@ map *initMap(unsigned int l, unsigned int c, unsigned int rank){
     myMap->nbPlants = 3;
     myMap->lvlRequired = rank == 1 ? 0 : (rank == 2 ? 3 : 7);
 
-    for(unsigned int i=0; i<myMap->rows; i++){
+    for(int i=0; i<myMap->rows; i++){
         // ALLOCATING TABS OF MAP FOR EACH ROW
         myMap->map[i] = malloc(c*sizeof(int));
         assert(myMap->map[i]);
         // INITIALIZING EACH CASE TO '0' VALUE
-        for(unsigned int j=0; j<myMap->cols; j++){
+        for(int j=0; j<myMap->cols; j++){
             myMap->map[i][j] = 0;
         }
     }
@@ -217,8 +238,8 @@ map *initMap(unsigned int l, unsigned int c, unsigned int rank){
 
 // PRINTING FUNCTION OF MAP
 void printMap(map *myMap){
-    for(unsigned int i=0; i<myMap->rows; i++){
-        for(unsigned int j=0; j<myMap->cols; j++){
+    for(int i=0; i<myMap->rows; i++){
+        for(int j=0; j<myMap->cols; j++){
             printf("%d\t", myMap->map[i][j]);
         }
         printf("\n");
