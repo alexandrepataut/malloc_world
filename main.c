@@ -4,10 +4,29 @@
 #include <assert.h>
 #include <time.h>
 #include <assert.h>
-#include "map.h"
+#include <string.h>
+#include "game.h"
+
+
+void printHelper(){
+    printf("========================================\n");
+    printf("|                                      |\n");
+    printf("|               COMMANDS               |\n");
+    printf("|                                      |\n");
+    printf("|   +------------------------------+   |\n");
+    printf("|   |      GO UP : Press 'u'       |   |\n");
+    printf("|   |      GO DOWN : Press 'd'     |   |\n");
+    printf("|   |      GO LEFT : Press 'l'     |   |\n");
+    printf("|   |      GO RIGHT : Press 'r'    |   |\n");
+    printf("|   +------------------------------+   |\n");
+    printf("|                                      |\n");
+    printf("========================================\n");
+    printf("\n\n");
+    printf("Please enter your move (u, d, l, r) and press 'Enter'\n\n");
+}
 
 int main() {
-    unsigned int l, c;
+    /*unsigned int l, c;
     l=8;
     c=8;
     map *myMap1 = initMap(l,c,1);
@@ -21,7 +40,30 @@ int main() {
     printMap(myMap2);
     printf("\n\n\n\n");
     printf("\t\t\tMAP 3\n\n");
-    printMap(myMap3);
+    printMap(myMap3);*/
+
+    game *myGame = newGame();
+    int counter = 0;
+    while(counter < 20){
+        printf("\t\t\tMAP %d\n", myGame->p->currentMap);
+        printAll(myGame);
+        printHelper();
+
+        char input[1];
+
+        scanf("%s", input);
+        if(strcmp(input, "u")==0)
+            moveUp(myGame);
+        if(strcmp(input, "d")==0)
+            moveDown(myGame);
+        if(strcmp(input, "l")==0)
+            moveLeft(myGame);
+        if(strcmp(input, "r")==0)
+            moveRight(myGame);
+
+        printAll(myGame);
+        counter++;
+    }
 
     return 0;
 }
