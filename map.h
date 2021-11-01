@@ -14,6 +14,8 @@ typedef struct map
     int lvlRequired;
 }map;
 
+
+// GETTERS FOR PLAYER POSITION
 int getXPlayerPos(map *myMap){
     for(int i = 0; i < myMap->rows; i++){
         for(int j = 0; j < myMap->cols; j++){
@@ -24,7 +26,6 @@ int getXPlayerPos(map *myMap){
     }
     return 0;
 }
-
 int getYPlayerPos(map *myMap){
     for(int i = 0; i < myMap->rows; i++){
         for(int j = 0; j < myMap->cols; j++){
@@ -51,7 +52,8 @@ void putTrees(map *myMap){
         
 
         if(myMap->map[x][y]==0){
-
+            // PUT TREE VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+            // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = val;
             i++;
         }
@@ -73,11 +75,12 @@ void putMonsters(map *myMap){
         x = rand()%(myMap->rows);
         y = rand()%(myMap->cols);
 
+        // GENERATE A RANDOM MONSTER VALUE DEPENDING ON PREVIOUS CALCULATED VALUES
         randMonster = (rand()%(max_val - min_val +1)) + min_val;
-        
 
         if(myMap->map[x][y]==0){
-
+            // PUT MONSTER VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+            // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = randMonster;
             i++;
         }
@@ -99,7 +102,8 @@ void putPlants(map *myMap){
         
 
         if(myMap->map[x][y]==0){
-
+            // PUT PLANT VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+            // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = val;
             i++;
         }
@@ -108,10 +112,10 @@ void putPlants(map *myMap){
 
 void putTpCases(map *myMap){
     int x, y, i, val, nbOfTpCases;
-    // NUMBER OF TREES DEPENDS OF THE RANK OF THE MAP
+    // NUMBER OF TP CASES DEPENDS ON THE RANK OF THE MAP
     nbOfTpCases = myMap->nbTrees;
     i = 0;
-    // TREE VALUE ON MAP DEPENDS OF THE RANK OF THE MAP [MAP 1 : 5] [MAP 2 : 8] [MAP 3 : 11]
+    // TP CASE VALUE ON MAP DEPENDS ON THE RANK OF THE MAP [MAP 1 : 5] [MAP 2 : 8] [MAP 3 : 11]
     if(myMap->rank == 2)
         nbOfTpCases = 2;
     else
@@ -119,17 +123,18 @@ void putTpCases(map *myMap){
 
     if(nbOfTpCases == 2){
         // THE SECOND MAP HAVE 2 TELEPORTATION CASES : 
-        //                                  MAP 2 -> MAP 1 (case value = -2)
-        //                                  MAP 2 -> MAP 3 (case value = -3)
+        //      MAP 2 -> MAP 1 (case value = -2)
+        //      MAP 2 -> MAP 3 (case value = -3)
         val = -2;
         while(i<nbOfTpCases){
             x = rand()%(myMap->rows);
             y = rand()%(myMap->cols);
-
+            // PUT TREE VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+            // ONLY IF THE MAP[X, Y] CASE IS FREE
             if(myMap->map[x][y] == 0){
                 myMap->map[x][y] = val;
                 i++;
-                val--;
+                val--;  // VAL HAS TO BE DECREMENTED BECAUSE OF THE DIFFERENT TP CASES ON MAP 2 (-2 & -3)
             }
         }
     }
@@ -162,7 +167,8 @@ void putRocs(map *myMap){
         
 
         if(myMap->map[x][y]==0){
-
+            // PUT ROC VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+            // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = val;
             i++;
         }
@@ -176,7 +182,8 @@ void putPnj(map *myMap){
     while(i<1){
         x = rand()%(myMap->rows);
         y = rand()%(myMap->cols);
-
+        // PUT PNJ VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+        // ONLY IF THE MAP[X, Y] CASE IS FREE
         if(myMap->map[x][y]){
             myMap->map[x][y] = 2;
             i++;
@@ -191,7 +198,8 @@ void putPlayer(map *myMap){
     while(i<1){
         x = rand()%(myMap->rows);
         y = rand()%(myMap->cols);
-
+        // PUT PLAYER VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+        // ONLY IF THE MAP[X, Y] CASE IS FREE
         if(myMap->map[x][y]){
             myMap->map[x][y] = 1;
             i++;
@@ -217,10 +225,11 @@ map *initMap(int l, int c, int rank){
     myMap->rows = l;
     myMap->cols = c;
     myMap->rank = rank;
-    myMap->nbTrees = 3;
-    myMap->nbMonsters = 10;
-    myMap->nbRocs = 3;
-    myMap->nbPlants = 3;
+    // NUMBER OF EACH RESOURCE (TREES, PLANTS, MONSTERS, ROCS) DEPENDS ON THE RANK OF THE MAP
+    myMap->nbTrees = 3 + 4 * rank;
+    myMap->nbMonsters = 10 + 3 * rank;
+    myMap->nbRocs = 3 + 4 * rank;
+    myMap->nbPlants = 3 + 4 * rank;
     myMap->lvlRequired = rank == 1 ? 0 : (rank == 2 ? 3 : 7);
 
     for(int i=0; i<myMap->rows; i++){
@@ -232,16 +241,37 @@ map *initMap(int l, int c, int rank){
             myMap->map[i][j] = 0;
         }
     }
+    // PUT EVERY RESOURCES ON THE BLANK MAP
     putAll(myMap);
     return myMap;
 }
 
-// PRINTING FUNCTION OF MAP
+// PRINTING FUNCTION OF MAP (ONLY ADAPTED FOR THE FIRST MAP)
 void printMap(map *myMap){
+    int isPlayer = 0;
+    printf("                __________________________\n");
+    printf("               /                          \\\n");
+    printf("               |           MAP %d          |\n", myMap->rank);
+    printf("               +--------------------------+\n");
+    printf("               |                          |\n");
     for(int i=0; i<myMap->rows; i++){
+        printf("               |  ");
         for(int j=0; j<myMap->cols; j++){
-            printf("%d\t", myMap->map[i][j]);
+            printf("%d ", myMap->map[i][j]);
+            if(myMap->map[i][j] / 10 == 0 && myMap->map[i][j] > -1){
+                printf(" ");
+            }
+            if(myMap->map[i][j] == 1 && isPlayer == 0){
+                isPlayer = 1;
+            }
+        }
+        printf("|");
+        if(isPlayer == 1){
+            printf(" <- Player is on this line");
+            isPlayer = 0;
         }
         printf("\n");
     }
+    printf("               |                          |\n");
+    printf("               \\__________________________/\n");
 }
