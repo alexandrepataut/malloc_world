@@ -8,65 +8,90 @@
 #include "game.h"
 
 // PRINTING FUNCTION FOR COMMANDS
-void printHelper(){
-    printf("          ______________________________________\n");
-    printf("         /                                      \\\n");
-    printf("         |               COMMANDS               |\n");
-    printf("         |                                      |\n");
-    printf("         |   +------------------------------+   |\n");
-    printf("         |   |      GO UP : Press 'u'       |   |\n");
-    printf("         |   |      GO DOWN : Press 'd'     |   |\n");
-    printf("         |   |      GO LEFT : Press 'l'     |   |\n");
-    printf("         |   |      GO RIGHT : Press 'r'    |   |\n");
-    printf("         |   +------------------------------+   |\n");
-    printf("         |                                      |\n");
-    printf("         \\______________________________________/\n");
+void printCommands(){
+    printf("          _______________________________________\n");
+    printf("         /                                       \\\n");
+    printf("         |                COMMANDS                |\n");
+    printf("         |                                        |\n");
+    printf("         |   +--------------------------------+   |\n");
+    printf("         |   |      GO UP : Press 'z'         |   |\n");
+    printf("         |   |      GO DOWN : Press 's'       |   |\n");
+    printf("         |   |      GO LEFT : Press 'q'       |   |\n");
+    printf("         |   |      GO RIGHT : Press 'd'      |   |\n");
+    printf("         |   |      CONSULT                   |   |\n");
+    printf("         |   |                                |   |\n");
+    printf("         |   |        -INVENTORY : Press 'i'  |   |\n");
+    printf("         |   |        -WEAPON SET : Press 'w' |   |\n");
+    printf("         |   |                                |   |\n");
+    printf("         |   |      ACT : Press 'a'           |   |\n");
+    printf("         |   +--------------------------------+   |\n");
+    printf("         |                                        |\n");
+    printf("         |        Press 'Enter' to confirm        |\n");
+    printf("         |                                        |\n");
+    printf("         \\________________________________________/\n");
     printf("\n\n");
 }
 
-void makeMove(game *myGame){
+void takeInput(game *myGame){
     // CREATE A CHAR TO RECEIVE THE COMMAND INPUT
-    char input[1];
-    printf("Please enter your move (u, d, l, r) and press 'Enter'\n'h' for help\n\n");
+    char input[50];
+    printf("What is your entry ?\n\n\tPress 'c' to see commands instructions, then press 'Enter'\n");
     scanf("%s", input);
 
     // PRINT INSTRUCTION ON COMMAND LINE
 
     // MAKE MOVE DEPENDING ON THE INPUT
-    if(strcmp(input, "u")==0 || strcmp(input, "U")==0){
+    if (strcmp(input, "z")==0 || strcmp(input, "Z")==0) {
         moveUp(myGame);
         return;
     }
-    if(strcmp(input, "d")==0 || strcmp(input, "D")==0){
+    if (strcmp(input, "s")==0 || strcmp(input, "S")==0) {
         moveDown(myGame);
         return;
     }
-    if(strcmp(input, "l")==0 || strcmp(input, "L")==0){
+    if (strcmp(input, "q")==0 || strcmp(input, "Q")==0) {
         moveLeft(myGame);
         return;
     }
-    if(strcmp(input, "r")==0 || strcmp(input, "R")==0){
+    if (strcmp(input, "d")==0 || strcmp(input, "D")==0) {
         moveRight(myGame);
         return;
     }
-    if(strcmp(input, "h")==0 || strcmp(input, "H")==0){
-        printHelper();
+    if (strcmp(input, "i")==0 || strcmp(input, "I")==0) {
+        printInventory(myGame->p);
         return;
     }
-    printf("Invalid input (try again with 'u', 'd', 'l', 'r' or 'h' for help\n");
+    if (strcmp(input, "c")==0 || strcmp(input, "C")==0) {
+        printCommands();
+        return;
+    }
+    if (strcmp(input, "w")==0 || strcmp(input, "W")==0) {
+        printWeaponSet(myGame->p);
+        return;
+    }
+    if (strcmp(input, "a")==0 || strcmp(input, "A")==0) {
+        makeAction(myGame);
+        return;
+    }
+    printf("    +-----------------------------------------------------------------------------+\n");
+    printf("    |                                                                             |\n");
+    printf("    | %s : Invalid input (Type 'c' and press 'Enter' to see commands instructions) |\n", input);
+    printf("    |                                                                             |\n");
+    printf("    +-----------------------------------------------------------------------------+\n");
+    return;
 }
 
 int main() {
     game *myGame = newGame();
-    int counter = 0;
-    printAll(myGame);
-
     // LAUNCH THE GAME WITH A LOOP
+    myGame->p->level = 666;
+    int counter = 0;
     while(counter < 3000){
-        makeMove(myGame);
         printAll(myGame);
+        takeInput(myGame);
         counter++;
     }
-
+    
+    closeGame(myGame);
     return 0;
 }
