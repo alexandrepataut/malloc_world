@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <malloc.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <time.h>
-#include <assert.h>
-#include <string.h>
+#include "malloc_world.h"
 #include "game.h"
 
 // PRINTING FUNCTION FOR COMMANDS

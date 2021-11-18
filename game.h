@@ -1,6 +1,10 @@
-#include "lib.h"
+#include "malloc_world.h"
 #include "map.h"
 #include "player.h"
+
+#ifndef GAME_H
+#define GAME_H
+#endif
 
 // GAME CLASS CONTAINS THE FULL GAME MANAGING THANKS TO OTHER CLASSES (MAP, PLAYER, ...)
 // WE CAN OPERATE ON EVERY ASPECTS OF THE GAME RIGHT HERE
@@ -12,6 +16,10 @@ typedef struct game{
     map **mapSet;
     int nbOfMap;
 }game;
+int caseValToItemVal(int caseValue);
+int findTargetValueCase(game *myGame, int posX, int posY);
+int findTargetXPos(game *myGame);
+int findTargetYPos(game *myGame);
 
 // FUNCTION FOR CREATING A NEW GAME
 game *newGame(){
@@ -48,6 +56,57 @@ void closeGame(game *myGame){
     //free(myGame);
 }
 
+void printPlayer(game *myGame){
+    printf("                 ________________________\n");
+    printf("                /                        \\\n");
+    printf("                |      PLAYER STATS      |\n");
+    printf("                |                        |\n");
+    printf("                +------------------------+\n");
+    printf("    \t\t| HP : %d/%d\n", myGame->p->currentHp, myGame->p->hp);
+    printf("    \t\t| PLAYER LEVEL : %d\n", myGame->p->level);
+    printf("    \t\t| POSITION :  [%d, %d]\n", myGame->p->posX, myGame->p->posY);
+    printf("    \t\t| DIRECTION :  ");
+    switch (myGame->p->direction)
+    {
+    case _NORTH_:
+        printf("NORTH\n");
+        break;
+    case _SOUTH_:
+        printf("SOUTH\n");
+        break;
+    case _EAST_:
+        printf("EAST\n");
+        break;
+    case _WEST_:
+        printf("WEST\n");
+        break;
+    
+    default:
+        break;
+    }
+    printf("    \t\t| CURRENT MAP : %d\n", myGame->p->currentMap);
+    printf("    \t\t| TARGET : ");
+    switch (findCaseType(findTargetValueCase(myGame, findTargetXPos(myGame), findTargetYPos(myGame))))
+    {
+    case _IS_RESOURCE_:
+        printResource(caseValToItemVal(findTargetValueCase(myGame, findTargetXPos(myGame), findTargetYPos(myGame))));
+        //printFarming(myGame->mapSet[myGame->p->currentMap - 1]->map[myGame->p->posX][myGame->p->posY]);
+        printf("\n");
+        break;
+    case _IS_MONSTER_CASE_:
+        printf("Monster\n");
+        break;
+    case _IS_TP_CASE_:
+        printf("Make teleportation ?\n");
+        break;
+    case _PNJ_CASE_:
+        printf("Talk to Pr. Malloc ?\n");
+        break;
+    default:
+        printf("\n");
+    }
+    printf("                \\_______________________/\n");
+}
 // PRINTING FUNCTION FOR THE CURRENT GAME MAP AND THE PLAYER STATS
 void printAll(game *myGame){
     assert(myGame);
@@ -56,7 +115,7 @@ void printAll(game *myGame){
     printf("\n\n");
     printMap(myGame->mapSet[myGame->p->currentMap-1]);
     printf("\n\n");
-    printPlayer(myGame->p);
+    printPlayer(myGame);
     printf("\n\n");
 }
 
@@ -269,77 +328,6 @@ int findTargetYPos(game *myGame){
     }
 }
 
-int indexToolNeeded(item **myInventory, int resourceValue){
-    assert(myInventory);
-    int index = -1;
-    switch (resourceValue)
-    {
-    case _HERBE_:
-        index = itemAlreadyPresent(myInventory, _SERPE_EN_BOIS_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _SERPE_EN_PIERRE_) : index;
-        index = index < 0 ? itemAlreadyPresent(myInventory, _SERPE_EN_FER_) : index;
-        return index;
-
-    case _PIERRE_:
-        index = itemAlreadyPresent(myInventory, _PIOCHE_EN_BOIS_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _PIOCHE_EN_PIERRE_) : index;
-        index = index < 0 ? itemAlreadyPresent(myInventory, _PIOCHE_EN_FER_) : index;
-        return index;
-
-    case _SAPIN_:
-        index = itemAlreadyPresent(myInventory, _HACHE_EN_BOIS_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _HACHE_EN_PIERRE_) : index;
-        index = index < 0 ? itemAlreadyPresent(myInventory, _HACHE_EN_FER_) : index;
-        return index;
-
-    case _LAVANDE_:
-        index = itemAlreadyPresent(myInventory, _SERPE_EN_PIERRE_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _SERPE_EN_FER_) : index;
-        return index;
-
-    case _FER_:
-        index = itemAlreadyPresent(myInventory, _PIOCHE_EN_PIERRE_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _PIOCHE_EN_FER_) : index;
-        return index;
-
-    case _HETRE_:
-        index = itemAlreadyPresent(myInventory, _HACHE_EN_PIERRE_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _HACHE_EN_FER_) : index;
-        return index;
-
-    case _CHANVRE_:
-        index = itemAlreadyPresent(myInventory, _SERPE_EN_FER_);
-        return index;
-
-    case _DIAMANT_:
-        index = itemAlreadyPresent(myInventory, _PIOCHE_EN_FER_);
-        return index;
-
-    case _CHENE_:
-        index = itemAlreadyPresent(myInventory, _HACHE_EN_FER_);
-        return index;
-        
-    
-    default:
-        return index;
-    }
-    return index;
-}
-
-int findNextDurability(item *tool, int resourceValue){
-    if(resourceValue == _PIERRE_ || resourceValue == _SAPIN_ || resourceValue == _HERBE_){
-        return (tool->durability - ( (tool->maxDurability) / 10));
-    }
-
-    if(resourceValue == _FER_ || resourceValue == _HETRE_ || resourceValue == _LAVANDE_){
-        return (tool->durability - ( (tool->maxDurability) /10) * 2);
-    }
-
-    if(resourceValue == _DIAMANT_ || resourceValue == _CHENE_ || resourceValue == _CHANVRE_){
-        return (tool->durability - ( (tool->maxDurability) / 10) * 4);
-    }
-    return -1;
-}
 
 void farmResource(game *myGame, int caseValue, int posX, int posY){
     assert(myGame);
@@ -347,49 +335,37 @@ void farmResource(game *myGame, int caseValue, int posX, int posY){
     assert(myGame->mapSet);
     assert(myGame->mapSet[myGame->p->currentMap-1]);
     assert(myGame->p->inventory);
-
     
     int itmValue = 0;
-
     switch (caseValue)
     {
     case _PLANT_1_:
         itmValue = _HERBE_;
         break;
-
     case _ROC_1_:
         itmValue = _PIERRE_;
         break;
-
     case _BOIS_1_:
         itmValue = _SAPIN_;
         break;
-
     case _PLANT_2_:
         itmValue = _LAVANDE_;
         break;
-
     case _ROC_2_:
         itmValue = _FER_;
         break;
-
     case _BOIS_2_:
         itmValue = _HETRE_;
         break;
-
     case _PLANT_3_:
         itmValue = _CHANVRE_;
         break;
-
     case _ROC_3_:
         itmValue = _DIAMANT_;
         break;
-
     case _BOIS_3_:
         itmValue = _CHENE_;
         break;
-        
-    
     default:
         return;
     }
@@ -402,22 +378,17 @@ void farmResource(game *myGame, int caseValue, int posX, int posY){
     }
 
     int nextDurability = findNextDurability(myGame->p->inventory[indexTool], itmValue);
-
     if(nextDurability < 0)
         return;
-
     myGame->p->inventory[indexTool]->durability = nextDurability;
 
-    if(index < 0){
+    if(index < 0)
         addItem(myGame->p->inventory, itmValue);
-    }
-
     else{
         if(myGame->p->inventory[index]->quantity < 20){
             addItem(myGame->p->inventory, itmValue);
         }
     }
-    
     myGame->mapSet[myGame->p->currentMap - 1]->map[posX][posY] = _FREE_CASE_;
 
 }
@@ -499,5 +470,41 @@ void makeAction(game *myGame){
 
     default:
         return;
+    }
+}
+
+int caseValToItemVal(int caseValue){
+    switch (caseValue)
+    {
+    case _PLANT_1_:
+        return _HERBE_;
+    case _PLANT_2_:
+        return _LAVANDE_;
+    case _PLANT_3_:
+        return _CHANVRE_;
+    case _ROC_1_:
+        return _PIERRE_;
+    case _ROC_2_:
+        return _FER_;
+    case _ROC_3_:
+        return _DIAMANT_;
+    case _BOIS_1_:
+        return _SAPIN_;
+    case _BOIS_2_:
+        return _HETRE_;
+    case _BOIS_3_:
+        return _CHENE_;
+    case _TP_CASE_1_TO_2:
+        return _TP_CASE_1_TO_2;
+    case _TP_CASE_2_TO_3 :
+        return _TP_CASE_2_TO_3;
+    case _FREE_CASE_:
+        return _FREE_CASE_;
+    case _INFRANCHISSABLE_:
+        return _INFRANCHISSABLE_;
+    default:
+        if(findCaseType(caseValue) == _IS_MONSTER_CASE_)
+            return _IS_MONSTER_CASE_;
+        return _INFRANCHISSABLE_;
     }
 }

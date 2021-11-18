@@ -1,19 +1,10 @@
-#ifndef _NORTH_
-#define _NORTH_ 0
-#endif
-#ifndef _SOUTH_
-#define _SOUTH_ 1
-#endif
-#ifndef _EAST_
-#define _EAST_ 2
-#endif
-#ifndef _WEST_
-#define _WEST_ 3
-#endif
-
-
-#include "lib.h"
+#include "malloc_world.h"
+#include "direction.h"
 #include "item.h"
+
+#ifndef PLAYER_H
+#define PLAYER_H
+#endif
 
 typedef struct player{
     // PLAYER STRUCT IS USED WHEN MAKING MOVE OR ANY ACTION TO UPDATE EACH ATTRIBUTE
@@ -67,8 +58,7 @@ void freePlayer(player *p){
     free(p);
 }
 
-// PRINTING FUNCTION FOR PLAYER STATS
-void printPlayer(player *p){
+/* void printPlayer(player *p){
     printf("                 ________________________\n");
     printf("                /                        \\\n");
     printf("                |      PLAYER STATS      |\n");
@@ -99,6 +89,7 @@ void printPlayer(player *p){
     printf("    \t\t| CURRENT MAP : %d\n", p->currentMap);
     printf("                \\_______________________/\n");
 }
+*/
 
 void printWeaponSet(player *p){
     printf("                 ___________________________________________________\n");
