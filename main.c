@@ -78,7 +78,7 @@ void takeInput(game *myGame){
 int main() {
     game *myGame = newGame();
     // LAUNCH THE GAME WITH A LOOP
-    myGame->p->level = 666;
+    myGame->p->level = 6;
     int counter = 0;
     while(counter < 3000){
         printAll(myGame);

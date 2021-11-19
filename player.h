@@ -32,8 +32,6 @@ player *newPlayer(){
     addItem(p->inventory, _PIOCHE_EN_BOIS_);
     addItem(p->inventory, _SERPE_EN_BOIS_);
     addItem(p->inventory, _HACHE_EN_BOIS_);
-    addItem(p->inventory, _LANCE_EN_DIAMANT_);
-    p->inventory[3]->durability -= 2;
     
     p->direction = _SOUTH_;
     

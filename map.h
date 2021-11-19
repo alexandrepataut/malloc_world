@@ -271,7 +271,7 @@ void putAll(map *myMap){
 
 map *initMap(int l, int c, int rank){
     // CREATING MAP TAB OF TABS ALLOCATING INT TAB FIRSTLY ...
-    map *myMap = malloc(sizeof(myMap));
+    map *myMap = malloc(sizeof(myMap)+11*sizeof(int));
     assert(myMap);
     myMap->map = malloc(l*sizeof(int *));
     assert(myMap->map);
@@ -289,7 +289,7 @@ map *initMap(int l, int c, int rank){
     myMap->plantVal = myMap->rank == 1 ? 3 : (myMap->rank == 6 ? 8 : 9);
     // ROC VALUE ON MAP DEPENDS ON THE RANK OF THE MAP [MAP 1 : 4] [MAP 2 : 7] [MAP 3 : 10]
     myMap->rocVal = myMap->rank == 1 ? 4 : (myMap->rank == 2 ? 7 : 10);
-    myMap->lvlRequired = rank == 1 ? 0 : (rank == 2 ? 3 : 7);
+    myMap->lvlRequired = myMap->rank == 1 ? 0 : (myMap->rank == 2 ? 3 : 7);
 
     for(int i=0; i<myMap->rows; i++){
         // ALLOCATING TABS OF MAP FOR EACH ROW

@@ -24,7 +24,7 @@ int findTargetYPos(game *myGame);
 // FUNCTION FOR CREATING A NEW GAME
 game *newGame(){
     game *myGame = malloc(sizeof(myGame));
-    myGame->mapSet = malloc(4*sizeof(map));
+    myGame->mapSet = malloc(4*sizeof(map) + 4 * 11 * sizeof(int));
     // BASICALLY WE MAKE :
     //      MAP 1 : 8 ROWS AND COLS, RANK 1
     //      MAP 2 : 12"                  "2
@@ -51,9 +51,9 @@ game *newGame(){
 void closeGame(game *myGame){
     assert(myGame);
     assert(myGame->mapSet);
-    //freeMapSet(myGame->mapSet, 4);
-    //freePlayer(myGame->p);
-    //free(myGame);
+    freeMapSet(myGame->mapSet, 4);
+    freePlayer(myGame->p);
+    free(myGame);
 }
 
 void printPlayer(game *myGame){
@@ -399,36 +399,36 @@ void farmResource(game *myGame, int caseValue, int posX, int posY){
 
 void makeTp(game *myGame, int caseValue){
     assert(myGame);
+    assert(myGame->p);
     assert(myGame->mapSet);
 
     switch(myGame->p->currentMap){
         case 1 :
-            if(myGame->p->level < myGame->mapSet[1]->lvlRequired){
+            if(myGame->p->level < myGame->mapSet[1]->lvlRequired)
                 return;
-            }
             myGame->mapSet[0]->map[myGame->p->posX][myGame->p->posY] = _FREE_CASE_;
             putPlayer(myGame->mapSet[1]);
-            myGame->p->currentMap += 1;
             myGame->p->posX = getXPlayerPos(myGame->mapSet[1]);
             myGame->p->posY = getYPlayerPos(myGame->mapSet[1]);
+            myGame->p->currentMap += 1;
             return;
         case 2 :
             switch(caseValue){
                 case _TP_CASE_2_TO_1 :
                     myGame->mapSet[1]->map[myGame->p->posX][myGame->p->posY] = _FREE_CASE_;
                     putPlayer(myGame->mapSet[0]);
-                    myGame->p->currentMap -= 1;
                     myGame->p->posX = getXPlayerPos(myGame->mapSet[0]);
                     myGame->p->posY = getYPlayerPos(myGame->mapSet[0]);
+                    myGame->p->currentMap -= 1;
                     return;
                 case _TP_CASE_2_TO_3 :
                     if(myGame->p->level < myGame->mapSet[2]->lvlRequired)
                         return;
                     myGame->mapSet[1]->map[myGame->p->posX][myGame->p->posY] = _FREE_CASE_;
                     putPlayer(myGame->mapSet[2]);
-                    myGame->p->currentMap += 1;
                     myGame->p->posX = getXPlayerPos(myGame->mapSet[2]);
                     myGame->p->posY = getYPlayerPos(myGame->mapSet[2]);
+                    myGame->p->currentMap += 1;
                     return;
                 default :
                     return;
@@ -461,6 +461,7 @@ void makeAction(game *myGame){
         return;
     
     case _IS_TP_CASE_ :
+    printf("###\n#\nMAKING TP\n###\n");
         makeTp(myGame, caseValue);
         return;
     
