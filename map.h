@@ -66,7 +66,7 @@ void putTrees(map *myMap){
     int nbTrees, x, y, i, val;
     // NUMBER OF TREES DEPENDS ON THE RANK OF THE MAP
     nbTrees = myMap->nbTrees;
-    val = 1 ? 5 : (myMap->rank == 2 ? 8 : 11);
+    val = myMap->rank == 1 ? 5 : (myMap->rank == 2 ? 8 : 11);
     i = 0;
 
     while(i<nbTrees){

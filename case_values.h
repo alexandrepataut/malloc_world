@@ -93,6 +93,8 @@ int findCaseType(int value) {
 
     switch (value)
     {
+    case _PNJ_CASE_:
+        return _PNJ_CASE_;
     case _TP_CASE_2_TO_3:
         return _IS_TP_CASE_;
     case _TP_CASE_1_TO_2:
