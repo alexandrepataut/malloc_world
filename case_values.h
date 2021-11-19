@@ -122,6 +122,9 @@ int findCaseType(int value) {
     case _BOSS_:
         return _BOSS_;
     default:
-        return _IS_MONSTER_CASE_;
+        if(value >= _MIN_MONSTER_1_ && value <= _MAX_MONSTER_3_)
+            return _IS_MONSTER_CASE_;
+        break;
     }
+    return _INFRANCHISSABLE_;
 }

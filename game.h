@@ -86,25 +86,29 @@ void printPlayer(game *myGame){
     }
     printf("    \t\t| CURRENT MAP : %d\n", myGame->p->currentMap);
     printf("    \t\t| TARGET : ");
-    switch (findCaseType(findTargetValueCase(myGame, findTargetXPos(myGame), findTargetYPos(myGame))))
-    {
-    case _IS_RESOURCE_:
-        printResource(caseValToItemVal(findTargetValueCase(myGame, findTargetXPos(myGame), findTargetYPos(myGame))));
-        //printFarming(myGame->mapSet[myGame->p->currentMap - 1]->map[myGame->p->posX][myGame->p->posY]);
-        printf("\n");
-        break;
-    case _IS_MONSTER_CASE_:
-        printf("Monster\n");
-        break;
-    case _IS_TP_CASE_:
-        printf("Make teleportation ?\n");
-        break;
-    case _PNJ_CASE_:
-        printf("Talk to Pr. Malloc ?\n");
-        break;
-    default:
-        printf("\n");
+    int targetXPos = findTargetXPos(myGame);
+    int targetYPos = findTargetYPos(myGame);
+    if(targetXPos >= 0 && targetXPos < myGame->mapSet[myGame->p->currentMap-1]->rows && targetYPos >= 0 && targetYPos < myGame->mapSet[myGame->p->currentMap-1]->cols){
+        switch (findCaseType(findTargetValueCase(myGame, findTargetXPos(myGame), findTargetYPos(myGame))))
+        {
+        case _IS_RESOURCE_:
+            printResource(caseValToItemVal(findTargetValueCase(myGame, findTargetXPos(myGame), findTargetYPos(myGame))));
+            //printFarming(myGame->mapSet[myGame->p->currentMap - 1]->map[myGame->p->posX][myGame->p->posY]);
+            break;
+        case _IS_MONSTER_CASE_:
+            printf("Monster");
+            break;
+        case _IS_TP_CASE_:
+            printf("Make teleportation ?");
+            break;
+        case _PNJ_CASE_:
+            printf("Talk to Pr. Malloc ?");
+            break;
+        default:
+            break;
+        }
     }
+    printf("\n");
     printf("                \\_______________________/\n");
 }
 // PRINTING FUNCTION FOR THE CURRENT GAME MAP AND THE PLAYER STATS
