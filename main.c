@@ -3,33 +3,40 @@
 
 // PRINTING FUNCTION FOR COMMANDS
 void printCommands(){
-    printf("          _______________________________________\n");
-    printf("         /                                       \\\n");
-    printf("         |                COMMANDS                |\n");
-    printf("         |                                        |\n");
-    printf("         |   +--------------------------------+   |\n");
-    printf("         |   |      GO UP : Press 'z'         |   |\n");
-    printf("         |   |      GO DOWN : Press 's'       |   |\n");
-    printf("         |   |      GO LEFT : Press 'q'       |   |\n");
-    printf("         |   |      GO RIGHT : Press 'd'      |   |\n");
-    printf("         |   |      CONSULT                   |   |\n");
-    printf("         |   |                                |   |\n");
-    printf("         |   |        -INVENTORY : Press 'i'  |   |\n");
-    printf("         |   |        -WEAPON SET : Press 'w' |   |\n");
-    printf("         |   |                                |   |\n");
-    printf("         |   |      ACT : Press 'a'           |   |\n");
-    printf("         |   +--------------------------------+   |\n");
-    printf("         |                                        |\n");
-    printf("         |        Press 'Enter' to confirm        |\n");
-    printf("         |                                        |\n");
-    printf("         \\________________________________________/\n");
+    printf("          __________________________________________\n");
+    printf("         /                                          \\\n");
+    printf("         | +---------------COMMANDS---------------+ |\n");
+    printf("         | |                                      | |\n");
+    printf("         | |  +--------------------------------+  | |\n");
+    printf("         | |  |  MOVES----------------------+  |  | |\n");
+    printf("         | |  |    | GO UP      : Press 'z' |  |  | |\n");
+    printf("         | |  |    | GO DOWN    : Press 's' |  |  | |\n");
+    printf("         | |  |    | GO LEFT    : Press 'q' |  |  | |\n");
+    printf("         | |  |    | GO RIGHT   : Press 'd' |  |  | |\n");
+    printf("         | |  |    +------------------------+  |  | |\n");
+    printf("         | |  |                                |  | |\n");
+    printf("         | |  |  CONSULT--------------------+  |  | |\n");
+    printf("         | |  |    | INVENTORY  : Press 'i' |  |  | |\n");
+    printf("         | |  |    | WEAPON SET : Press 'w' |  |  | |\n");
+    printf("         | |  |    +------------------------+  |  | |\n");
+    printf("         | |  |                                |  | |\n");
+    printf("         | |  |  ACTIONS--------------------+  |  | |\n");
+    printf("         | |  |    | ACT        : Press 'a' |  |  | |\n");
+    printf("         | |  |    +------------------------+  |  | |\n");
+    printf("         | |  |                                |  | |\n");
+    printf("         | |  |    Press 'Enter' to confirm    |  | |\n");
+    printf("         | |  |                                |  | |\n");
+    printf("         | |  +--------------------------------+  | |\n");
+    printf("         | |                                      | |\n");
+    printf("         | +--------------------------------------+ |\n");
+    printf("         \\__________________________________________/\n");
     printf("\n\n");
 }
 
 void takeInput(game *myGame){
     // CREATE A CHAR TO RECEIVE THE COMMAND INPUT
     char input[50];
-    printf("What is your entry ?\n\n\tPress 'c' to see commands instructions, then press 'Enter'\n");
+    printf("What is your entry ?\n\n\tPress 'h' to see commands instructions, then press 'Enter'\n");
     scanf("%s", input);
 
     // PRINT INSTRUCTION ON COMMAND LINE
@@ -65,10 +72,6 @@ void takeInput(game *myGame){
     }
     if (strcmp(input, "a")==0 || strcmp(input, "A")==0) {
         makeAction(myGame);
-        return;
-    }
-    if (strcmp(input, "c")==0 || strcmp(input, "C")==0) {
-        printCraftsList(myGame->p);
         return;
     }
     printf("    +-----------------------------------------------------------------------------+\n");
