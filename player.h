@@ -18,11 +18,21 @@ typedef struct player{
     item *plastron;
 }player;
 
+void craftItem(player *p, int myCraftValue);
+int getNbOfPossibleCrafts(player *p);
+item **getPossibleCrafts(player *p);
+void printCraftsList(player *p);
+void printInventory(player *p);
+void printWeaponSet(player *p);
+void freePlayer(player *p);
+player *newPlayer();
+
 // CREATE A NEW PLAYER
-player *newPlayer(){
-    player *p = malloc(sizeof(p));
+player *newPlayer()
+{
+    player *p = malloc(sizeof(player) + 7 * sizeof(int));
     assert(p);
-    p->level = 1;
+    p->level = 0;
     p->currentHp = 100;
     p->hp = 100; // MAX HP
     p->currentMap = 1;
@@ -45,7 +55,8 @@ player *newPlayer(){
     return p;
 }
 
-void freePlayer(player *p){
+void freePlayer(player *p)
+{
     assert(p);
     assert(p->weaponSet);
     assert(p->inventory);
@@ -55,39 +66,6 @@ void freePlayer(player *p){
     free(p->plastron);
     free(p);
 }
-
-/* void printPlayer(player *p){
-    printf("                 ________________________\n");
-    printf("                /                        \\\n");
-    printf("                |      PLAYER STATS      |\n");
-    printf("                |                        |\n");
-    printf("                +------------------------+\n");
-    printf("    \t\t| HP : %d/%d\n", p->currentHp, p->hp);
-    printf("    \t\t| PLAYER LEVEL : %d\n", p->level);
-    printf("    \t\t| POSITION :  [%d, %d]\n", p->posX, p->posY);
-    printf("    \t\t| DIRECTION :  ");
-    switch (p->direction)
-    {
-    case _NORTH_:
-        printf("NORTH\n");
-        break;
-    case _SOUTH_:
-        printf("SOUTH\n");
-        break;
-    case _EAST_:
-        printf("EAST\n");
-        break;
-    case _WEST_:
-        printf("WEST\n");
-        break;
-    
-    default:
-        break;
-    }
-    printf("    \t\t| CURRENT MAP : %d\n", p->currentMap);
-    printf("                \\_______________________/\n");
-}
-*/
 
 void printWeaponSet(player *p){
     printf("                 ___________________________________________________\n");
@@ -125,7 +103,8 @@ void printWeaponSet(player *p){
     printf("                \\___________________________________________________/\n");
 }
 
-void printInventory(player *p){
+void printInventory(player *p)
+{
     printf("                 ___________________________________________________\n");
     printf("                /                                                   \\\n");
     printf("                |                     INVENTORY                     |\n");
@@ -205,4 +184,330 @@ void printInventory(player *p){
     }
     printf("                \\___________________________________________________/\n");
 
+}
+
+void craftItem(player *p, int myCraftValue)
+{
+    assert(p);
+    assert(p->inventory);
+
+    int nbOfPossibleCrafts = getNbOfPossibleCrafts(p);
+    item **possibleCrafts = malloc(nbOfPossibleCrafts * sizeof(item *) + nbOfPossibleCrafts * sizeof(int));
+    assert(possibleCrafts);
+
+    int indexCraftList = craftAlreadyPresent(possibleCrafts, myCraftValue, nbOfPossibleCrafts);
+    if(indexCraftList < 0 || indexCraftList >= 3)
+        return;
+
+    int **ingredients = getIngredientsNeeded(myCraftValue);
+    int indexPlant = itemAlreadyPresent(p->inventory, ingredients[_PLANT_INDEX_][_RESOURCE_]);
+    int indexRoc = itemAlreadyPresent(p->inventory, ingredients[_ROC_INDEX_][_RESOURCE_]);
+    int indexWood = itemAlreadyPresent(p->inventory, ingredients[_WOOD_INDEX_][_RESOURCE_]);
+
+    p->inventory[indexPlant]->quantity -= ingredients[_PLANT_INDEX_][_QUANTITY_];
+    p->inventory[indexRoc]->quantity -= ingredients[_ROC_INDEX_][_QUANTITY_];
+    p->inventory[indexWood]->quantity -= ingredients[_WOOD_INDEX_][_QUANTITY_];
+
+    addItem(p->inventory, myCraftValue);
+
+    freeCraftsList(possibleCrafts, nbOfPossibleCrafts);
+    free(ingredients);    
+}
+
+void printCraftsList(player *p)
+{
+    assert(p);
+    assert(p->inventory);
+    int nbOfCrafts = getNbOfPossibleCrafts(p);
+
+    item **myCraftsList = malloc(nbOfCrafts*sizeof(item *)+nbOfCrafts*9*sizeof(int));
+    assert(myCraftsList);
+    
+    for(int i=0; i<nbOfCrafts; i++){
+        myCraftsList[i] = malloc(sizeof(item *));
+        myCraftsList[i] = createItem(0, 0);
+        assert(myCraftsList[i]);
+    }
+
+    myCraftsList = getPossibleCrafts(p);
+    int **ingredients = malloc(3 * sizeof(int[2]) + 2 * sizeof(int));
+
+    assert(ingredients);
+    for(int i=0; i<3; i++){
+        ingredients[i] = malloc(2 * sizeof(int));
+        assert(ingredients[i]);
+        for(int j=0; j<2; j++){
+            ingredients[i][j] = 0;
+        }
+    }     
+
+
+    printf("OK\n");
+     
+    printf("                 ___________________________________________________\n");
+    printf("                /                                                   \\\n");
+    printf("                |                   MAKE CRAFTING                   |\n");
+    printf("                |                                                   |\n");
+    printf("                +---------------------------------------------------+\n");
+    printf("                |                                                   |\n");
+    printf("                |----+ [N°][CRAFT]                                  |\n");
+    printf("                |    | Ingredients                                  |\n");
+    printf("                |    +-------------------------------------------+  |\n");
+    printf("                +---------------------------------------------------+\n");
+    printf("                |\n");
+
+    for(int i=0; i<nbOfCrafts; i++){
+            assert(myCraftsList[i]);
+            printf("                +----+ [N°%d]--[", i);
+            printResource(myCraftsList[i]->value);  
+            printf("]\n");
+            ingredients = getIngredientsNeeded(myCraftsList[i]->value);
+            printf("                |    | ");
+            if(ingredients[_PLANT_INDEX_][_QUANTITY_] > 0)
+            {
+                printf("%d x ", ingredients[_PLANT_INDEX_][_QUANTITY_]);
+                printResource(ingredients[_PLANT_INDEX_][_RESOURCE_]);
+                printf("  ");
+            }
+            if(ingredients[_ROC_INDEX_][_QUANTITY_] > 0)
+            {
+                printf("%d x ", ingredients[_ROC_INDEX_][_QUANTITY_]);
+                printResource(ingredients[_ROC_INDEX_][_RESOURCE_]);
+                printf("  ");
+            }
+            if(ingredients[_WOOD_INDEX_][_QUANTITY_] > 0)
+            {
+                printf("%d x ", ingredients[_WOOD_INDEX_][_QUANTITY_]);
+                printResource(ingredients[_WOOD_INDEX_][_RESOURCE_]);
+                printf("  ");
+            }
+            printf("  ");
+            
+            printf("\n                |    +-------------------------------------------+\n");
+    }
+    printf("                \\___________________________________________________/\n");
+}
+
+item **getPossibleCrafts(player *p)
+{
+    assert(p);
+    assert(p->inventory);
+
+    int nbOfCraft = getNbOfPossibleCrafts(p);
+
+    item **craftsList = malloc(25*sizeof(item *)+25*9*sizeof(int));
+    assert(craftsList);
+    
+    for(int i=0; i<25; i++){
+        craftsList[i] = malloc(sizeof(item *) + 9 * sizeof(int));
+        craftsList[i] = createItem(0, 0);
+        assert(craftsList[i]);
+    }
+
+    int plantQty, rocQty, woodQty;
+    int i=0;
+
+    plantQty = getResourceQuantity(p->inventory, _HERBE_);
+    rocQty = getResourceQuantity(p->inventory, _PIERRE_);
+    woodQty = getResourceQuantity(p->inventory, _SAPIN_);
+
+    if(isThisRecipePossible(_EPEE_EN_BOIS_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _EPEE_EN_BOIS_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_EPEE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _EPEE_EN_PIERRE_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_LANCE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _LANCE_EN_PIERRE_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_MARTEAU_EN_PIERRE_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _MARTEAU_EN_PIERRE_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_PLASTRON_EN_PIERRE_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _PLASTRON_EN_PIERRE_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_PIOCHE_EN_BOIS_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _PIOCHE_EN_BOIS_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_PIOCHE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _PIOCHE_EN_PIERRE_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_HACHE_EN_BOIS_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _HACHE_EN_BOIS_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_HACHE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _HACHE_EN_PIERRE_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_SERPE_EN_BOIS_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _SERPE_EN_BOIS_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_SERPE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _SERPE_EN_PIERRE_);
+        i += 1;
+    }
+    if(isThisRecipePossible(_POTION_DE_VIE_1_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+        addCraftToCraftsList(craftsList, _POTION_DE_VIE_1_);
+        i += 1;
+    }
+
+    if(p->currentMap > 1)
+    {
+        plantQty = getResourceQuantity(p->inventory, _LAVANDE_);
+        rocQty = getResourceQuantity(p->inventory, _FER_);
+        woodQty = getResourceQuantity(p->inventory, _HETRE_);
+
+            if(isThisRecipePossible(_EPEE_EN_FER_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _EPEE_EN_FER_);
+                i += 1;
+            }
+            if(isThisRecipePossible(_LANCE_EN_FER_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _LANCE_EN_FER_);
+                i += 1;
+            }
+            if(isThisRecipePossible(_MARTEAU_EN_FER_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _MARTEAU_EN_FER_);
+                i += 1;
+            }
+            if(isThisRecipePossible(_PLASTRON_EN_FER_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _PLASTRON_EN_FER_);
+                i += 1;
+            }
+            if(isThisRecipePossible(_PIOCHE_EN_FER_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _PIOCHE_EN_FER_);
+                i += 1;
+            }
+            if(isThisRecipePossible(_HACHE_EN_FER_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _HACHE_EN_FER_);
+                i += 1;
+            }
+            if(isThisRecipePossible(_SERPE_EN_FER_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _SERPE_EN_FER_);
+                i += 1;
+            }
+            if(isThisRecipePossible(_POTION_DE_VIE_2_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                addCraftToCraftsList(craftsList, _POTION_DE_VIE_2_);
+                i += 1;
+            }
+
+            if(p->currentMap > 2)
+            {
+                plantQty = getResourceQuantity(p->inventory, _CHANVRE_);
+                rocQty = getResourceQuantity(p->inventory, _DIAMANT_);
+                woodQty = getResourceQuantity(p->inventory, _CHENE_);
+
+                if(isThisRecipePossible(_DIAMANT_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                    addCraftToCraftsList(craftsList, _DIAMANT_);
+                    i += 1;
+                }
+                if(isThisRecipePossible(_LANCE_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                    addCraftToCraftsList(craftsList, _LANCE_EN_DIAMANT_);
+                    i += 1;
+                }
+                if(isThisRecipePossible(_MARTEAU_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                    addCraftToCraftsList(craftsList, _MARTEAU_EN_DIAMANT_);
+                    i += 1;
+                }
+                if(isThisRecipePossible(_PLASTRON_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                    addCraftToCraftsList(craftsList, _PLASTRON_EN_DIAMANT_);
+                    i += 1;
+                }
+                if(isThisRecipePossible(_POTION_DE_VIE_3_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                    addCraftToCraftsList(craftsList, _POTION_DE_VIE_3_);
+                    i += 1;
+                }
+            }
+    }
+    
+    return craftsList;
+}
+
+int getNbOfPossibleCrafts(player *p)
+{
+    assert(p);
+    assert(p->inventory);
+    int nbOfPossibleReceipts = 0;
+    int plantQty, rocQty, woodQty;
+
+    plantQty = getResourceQuantity(p->inventory, _HERBE_);
+    rocQty = getResourceQuantity(p->inventory, _PIERRE_);
+    woodQty = getResourceQuantity(p->inventory, _SAPIN_);
+
+    if(isThisRecipePossible(_EPEE_EN_BOIS_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_EPEE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_LANCE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_MARTEAU_EN_PIERRE_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_PLASTRON_EN_PIERRE_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_PIOCHE_EN_BOIS_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_PIOCHE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_HACHE_EN_BOIS_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_HACHE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_SERPE_EN_BOIS_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_SERPE_EN_PIERRE_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+    if(isThisRecipePossible(_POTION_DE_VIE_1_, plantQty, rocQty, woodQty) == 1)
+        nbOfPossibleReceipts += 1;
+
+    if(p->currentMap > 1)
+    {
+        plantQty = getResourceQuantity(p->inventory, _LAVANDE_);
+        rocQty = getResourceQuantity(p->inventory, _FER_);
+        woodQty = getResourceQuantity(p->inventory, _HETRE_);
+
+            if(isThisRecipePossible(_EPEE_EN_FER_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+            if(isThisRecipePossible(_LANCE_EN_FER_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+            if(isThisRecipePossible(_MARTEAU_EN_FER_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+            if(isThisRecipePossible(_PLASTRON_EN_FER_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+            if(isThisRecipePossible(_PIOCHE_EN_FER_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+            if(isThisRecipePossible(_HACHE_EN_FER_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+            if(isThisRecipePossible(_SERPE_EN_FER_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+            if(isThisRecipePossible(_POTION_DE_VIE_2_, plantQty, rocQty, woodQty) == 1)
+                nbOfPossibleReceipts += 1;
+
+            if(p->currentMap > 2)
+            {
+                plantQty = getResourceQuantity(p->inventory, _CHANVRE_);
+                rocQty = getResourceQuantity(p->inventory, _DIAMANT_);
+                woodQty = getResourceQuantity(p->inventory, _CHENE_);
+
+                if(isThisRecipePossible(_DIAMANT_, plantQty, rocQty, woodQty) == 1)
+                    nbOfPossibleReceipts += 1;
+                if(isThisRecipePossible(_LANCE_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1)
+                    nbOfPossibleReceipts += 1;
+                if(isThisRecipePossible(_MARTEAU_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1)
+                    nbOfPossibleReceipts += 1;
+                if(isThisRecipePossible(_PLASTRON_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1)
+                    nbOfPossibleReceipts += 1;
+                if(isThisRecipePossible(_POTION_DE_VIE_3_, plantQty, rocQty, woodQty) == 1)
+                    nbOfPossibleReceipts += 1;
+            }
+    }
+    
+    return nbOfPossibleReceipts;
 }

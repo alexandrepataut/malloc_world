@@ -445,6 +445,134 @@ void makeTp(game *myGame, int caseValue){
     }
 }
 
+
+void dealWithPNJ(game *myGame)
+{
+    char input[50];
+    int talking = 1;
+
+    while(talking == 1)
+    {
+        printf("\n\n\nWhat can I do for you ?\n");
+        printf("\t> Make crafting        - Press '1'\n");
+        printf("\t> Repair my items      - Press '2'\n");
+        printf("\t> Nothing, resume game - Press 'x'\n");
+
+        scanf("%s", input);
+
+        if(strcmp(input, "x") == 0)
+        {
+            talking = 0;
+            break;
+        }
+
+        if(strcmp(input, "1") == 0)
+        {
+            printf("\n\n\nI let you consult the list of possible fabrications with your ingredients\n");
+            printCraftsList(myGame->p);
+            printf("\nOk, what do you want to craft ?\n");
+            printf("\t> Make [N°]            - Press some id (example : 0 for N°0)\n");
+            printf("\t> Nothing, go back     - Press 'x'\n");
+            scanf("%s", input);
+            if(strcmp(input, "x") == 0)
+            {
+                dealWithPNJ(myGame);
+                break;
+            }
+            else
+            {
+                int id = atoi(input);
+                if(getNbOfPossibleCrafts(myGame->p)-1 < id)
+                {
+                    printf("    +------------------------------------------------------+\n");
+                    printf("    |  %d ", id);
+                    if(id / 10 == 0)
+                        printf(" ");
+                    printf(": This id does not match any item you can craft  |\n");
+                    printf("    +------------------------------------------------------+\n");
+                    dealWithPNJ(myGame);
+                    break;
+                }
+                else
+                {
+                    item **possibleCrafts = malloc(25*sizeof(item *) + 25*9*sizeof(int));
+                    assert(possibleCrafts);
+                    for(int i=0; i<25; i++){
+                        possibleCrafts[i] = malloc(sizeof(item *) + 9 * sizeof(int));
+                        possibleCrafts[i] = createItem(0, 0);
+                        assert(possibleCrafts[i]);
+                    }
+                    possibleCrafts = getPossibleCrafts(myGame->p);
+                    item *itemCrafted = createItem(possibleCrafts[id]->value, 1);
+                    int **ingredients = getIngredientsNeeded(itemCrafted->value);
+                    printf("\nAre you sure about your selection : ");
+                    printResource(itemCrafted->value);
+                    printf(" ?\n");
+                    printf("\t> Cost is : ");
+                    if(ingredients[_PLANT_INDEX_][_QUANTITY_] != 0)
+                    {
+                        printf("%d x ", ingredients[_PLANT_INDEX_][_QUANTITY_]);
+                        printResource(ingredients[_PLANT_INDEX_][_RESOURCE_]);
+                        printf("  ");
+                    }
+                    if(ingredients[_ROC_INDEX_][_QUANTITY_] != 0)
+                    {
+                        printf("%d x ", ingredients[_ROC_INDEX_][_QUANTITY_]);
+                        printResource(ingredients[_ROC_INDEX_][_RESOURCE_]);
+                        printf("  ");
+                    }
+                    if(ingredients[_WOOD_INDEX_][_QUANTITY_] != 0)
+                    {
+                        printf("%d x ", ingredients[_WOOD_INDEX_][_QUANTITY_]);
+                        printResource(ingredients[_WOOD_INDEX_][_RESOURCE_]);
+                        printf("  ");
+                    }
+                    printf("\n");
+                    printf("\t\t> Yes  - Press 'y'\n");
+                    printf("\t\t> No   - Press 'n'\n");
+                    scanf("%s", input);
+
+                    if(strcmp("y", input) == 0)
+                    {
+                        printf("\t\tYou obtain 1 x \n");
+                        printResource(possibleCrafts[id]->value);
+                        printf("\n");
+
+                        if(!isFullInventory(myGame->p->inventory))
+                        {
+                            updateResourceForCrafting(myGame->p->inventory, ingredients);
+                            addItem(myGame->p->inventory, possibleCrafts[id]->value);
+                            printf("Inventory has been updated\n\n\n");
+                            dealWithPNJ(myGame);
+                            break;
+                        }
+                        else
+                        {
+                            printf("Inventory is full, come back later\n\n");
+                            dealWithPNJ(myGame);
+                            break;
+                        }
+                    }
+                    if(strcmp("n", input) == 0)
+                    {
+                        dealWithPNJ(myGame);
+                        break;
+                    }
+                }
+
+            }
+        }
+
+        if(strcmp(input, "2") == 0)
+        {
+            repairAllDurability(myGame->p->inventory);
+            printf("Ok, it's done !\n");
+            dealWithPNJ(myGame);
+            break;
+        }
+    }
+}
+
 void makeAction(game *myGame){
     assert(myGame);
     int posX = findTargetXPos(myGame);
@@ -470,7 +598,7 @@ void makeAction(game *myGame){
         return;
 
     case _PNJ_CASE_ :
-        //dealWithPNJ(myGame);
+        dealWithPNJ(myGame);
         return;
 
     default:

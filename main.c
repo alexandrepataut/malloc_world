@@ -55,7 +55,7 @@ void takeInput(game *myGame){
         printInventory(myGame->p);
         return;
     }
-    if (strcmp(input, "c")==0 || strcmp(input, "C")==0) {
+    if (strcmp(input, "h")==0 || strcmp(input, "H")==0) {
         printCommands();
         return;
     }
@@ -67,9 +67,13 @@ void takeInput(game *myGame){
         makeAction(myGame);
         return;
     }
+    if (strcmp(input, "c")==0 || strcmp(input, "C")==0) {
+        printCraftsList(myGame->p);
+        return;
+    }
     printf("    +-----------------------------------------------------------------------------+\n");
     printf("    |                                                                             |\n");
-    printf("    | %s : Invalid input (Type 'c' and press 'Enter' to see commands instructions) |\n", input);
+    printf("    | %s : Invalid input (Type 'h' and press 'Enter' to see commands instructions) |\n", input);
     printf("    |                                                                             |\n");
     printf("    +-----------------------------------------------------------------------------+\n");
     return;
