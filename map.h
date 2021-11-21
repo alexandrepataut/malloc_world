@@ -25,6 +25,8 @@ typedef struct map
     int lvlRequired;
 }map;
 
+void setMapSetDifferences(map **dest, map **src);
+
 void freeMap(map *myMap){
     assert(myMap);
     free(myMap->map);
@@ -269,14 +271,16 @@ void putAll(map *myMap){
     putPnj(myMap);
 }
 
-map *initMap(int l, int c, int rank){
+map *initMap(int rank){
     // CREATING MAP TAB OF TABS ALLOCATING INT TAB FIRSTLY ...
-    map *myMap = malloc(sizeof(myMap)+11*sizeof(int));
+    int nbCase = rank == 1 ? 8*8 : (rank == 2 ? 12*12 : 15*15);
+    
+    map *myMap = malloc(sizeof(myMap) + nbCase + 11*sizeof(int));
     assert(myMap);
-    myMap->map = malloc(l*sizeof(int *));
+    myMap->rows = rank == 1 ? 8 : (rank == 2 ? 12 : 15);
+    myMap->cols = rank == 1 ? 8 : (rank == 2 ? 12 : 15);
+    myMap->map = malloc(sizeof(int **) + + myMap->rows*sizeof(int *) + nbCase*sizeof(int));
     assert(myMap->map);
-    myMap->rows = l;
-    myMap->cols = c;
     myMap->rank = rank;
     // NUMBER OF EACH RESOURCE (TREES, PLANTS, MONSTERS, ROCS) DEPENDS ON THE RANK OF THE MAP
     myMap->nbTrees = 3 + 4 * rank;
@@ -290,10 +294,16 @@ map *initMap(int l, int c, int rank){
     // ROC VALUE ON MAP DEPENDS ON THE RANK OF THE MAP [MAP 1 : 4] [MAP 2 : 7] [MAP 3 : 10]
     myMap->rocVal = myMap->rank == 1 ? 4 : (myMap->rank == 2 ? 7 : 10);
     myMap->lvlRequired = myMap->rank == 1 ? 0 : (myMap->rank == 2 ? 3 : 7);
+    /*
+    printf("rank: %d\t", myMap->rank);
+    printf("rows: %d\t", myMap->rows);
+    printf("cols: %d\t", myMap->cols);
+    printf("nbcases: %d\n", nbCase);
+    */
 
     for(int i=0; i<myMap->rows; i++){
         // ALLOCATING TABS OF MAP FOR EACH ROW
-        myMap->map[i] = malloc(c*sizeof(int));
+        myMap->map[i] = malloc(myMap->cols *sizeof(int *) + myMap->cols*sizeof(int));
         assert(myMap->map[i]);
         // INITIALIZING EACH CASE TO '0' VALUE
         for(int j=0; j<myMap->cols; j++){
@@ -306,9 +316,11 @@ map *initMap(int l, int c, int rank){
 }
 
 void printMap(map *myMap){
+    assert(myMap);
+    assert(myMap->map);
     int isPlayer = 0;
     if (myMap->rank == 1){
-        printf("                __________________________\n");
+        printf("\n                __________________________\n");
         printf("               /                          \\\n");
         printf("               |           MAP %d          |\n", myMap->rank);        
         printf("               |                          |\n");
@@ -395,6 +407,123 @@ void printMap(map *myMap){
         printf("               |                                               |\n");
         printf("               \\_______________________________________________/\n");
         return;
+    }
+}
+
+void initMapToZero(map *myMap)
+{
+    assert(myMap);
+
+    for(int i=0; i<myMap->rows; i++)
+    {
+        for(int j=0; j<myMap->cols; j++)
+        {
+            myMap->map[i][j] = 0;
+        }
+    }
+}
+
+void initMapSet(map **myMapSet)
+{
+    assert(myMapSet);
+    int ROWS_MAP_1, ROWS_MAP_2, ROWS_MAP_3, COLS_MAP_1, COLS_MAP_2, COLS_MAP_3;
+    ROWS_MAP_1 = 8;
+    COLS_MAP_1 = 8;
+    ROWS_MAP_2 = 12;
+    COLS_MAP_2 = 12;
+    ROWS_MAP_3 = 15;
+    COLS_MAP_3 = 15;
+
+    int NB_CASES_MAP_1, NB_CASES_MAP_2, NB_CASES_MAP_3;
+    NB_CASES_MAP_1 = ROWS_MAP_1 * COLS_MAP_1;
+    NB_CASES_MAP_2 = ROWS_MAP_2 * COLS_MAP_2;
+    NB_CASES_MAP_3 = ROWS_MAP_3 * COLS_MAP_3;
+    
+    int NB_CASES_MAPSET = NB_CASES_MAP_1 + NB_CASES_MAP_2 + NB_CASES_MAP_3;
+
+    myMapSet = malloc(sizeof(map **) + NB_CASES_MAPSET*sizeof(int) + 3*11*sizeof(int));
+    myMapSet[0] = malloc(sizeof(map *) + NB_CASES_MAP_1*sizeof(int) + 11*sizeof(int));
+    assert(myMapSet[0]);
+    myMapSet[1] = malloc(sizeof(map *) + NB_CASES_MAP_2*sizeof(int) + 11*sizeof(int));
+    assert(myMapSet[1]);
+    myMapSet[2] = malloc(sizeof(map *) + NB_CASES_MAP_3*sizeof(int) + 11*sizeof(int));
+    assert(myMapSet[2]);
+    
+    myMapSet[0] = initMap(1);
+    myMapSet[1] = initMap(2);
+    myMapSet[2] = initMap(3);
+}
+
+void initMapSetFrame(map ***myPreviousMapSetFrames, map **myMapSet)
+{
+    assert(myPreviousMapSetFrames);
+    assert(myMapSet);
+    int nbMapSetCase = ((myMapSet[0]->rows) * (myMapSet[0]->cols))+ ((myMapSet[1]->rows) * (myMapSet[1]->cols))+ ((myMapSet[2]->rows) * (myMapSet[2]->cols));
+    for(int i=0; i<5; i++)
+    {
+        myPreviousMapSetFrames[i] = malloc(3*sizeof(myMapSet) + nbMapSetCase*sizeof(int));
+        initMapSet(myPreviousMapSetFrames[i]);
+        for(int j=0; j<3; j++)
+        {
+            myPreviousMapSetFrames[i][j] = initMap(j+1);
+            initMapToZero(myPreviousMapSetFrames[i][j]);
+        }
+    }
+
+    //PRINT MAPSET FRAMES
+    /*
+    for(int i=0; i<5; i++)
+    {
+        for(int j=0; j<3; j++)
+        {
+            printMap(myPreviousMapSetFrames[i][j]);
+        }
+    }
+    */
+}
+
+void copyMapSet(map **dest, map **src)
+{
+    assert(dest);
+    assert(src);
+    for(int i=0; i<3; i++)
+    {
+        for(int j=0; j<src[i]->rows; j++)
+        {
+            for(int k=0; k<src[i]->cols; k++)
+            {
+                if(src[i]->map[j][k] != _PLAYER_)
+                    dest[i]->map[j][k] = src[i]->map[j][k];
+                else
+                    dest[i]->map[j][k] = 0;
+            }
+        }
+    }
+}
+
+void setMapSetDifferences(map **newMapSet, map **diffMapSet)
+{
+    for(int i=0; i<3; i++)
+    {
+        for(int j=0; j<newMapSet[i]->rows; j++)
+        {
+            for(int k=0; k<newMapSet[i]->rows; k++)
+            {
+                if(diffMapSet[i]->map[j][k] != 0 && newMapSet[i]->map[j][k] == 0 && diffMapSet[i]->map[j][k] != 1)
+                {
+                    newMapSet[i]->map[j][k] = diffMapSet[i]->map[j][k];
+                }
+            }
+        }
+    }
+}
+
+void printMapXInMapFrame(map ***myPreviousMapSetFrames)
+{
+    for(int i=0; i<5; i++)
+    {
+        printf("FRAME %d\n", i+1);
+        printMap(myPreviousMapSetFrames[i][0]);
     }
 }
 

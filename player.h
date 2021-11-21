@@ -240,9 +240,6 @@ void printCraftsList(player *p)
             ingredients[i][j] = 0;
         }
     }     
-
-
-    printf("OK\n");
      
     printf("                 ___________________________________________________\n");
     printf("                /                                                   \\\n");

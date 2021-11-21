@@ -14,36 +14,71 @@ typedef struct game{
     // GAME STRUCT IS DEFINED BY A PLAYER AND A MAPSET (TAB OF SEVERAL MAPS) => WE HAVE ALL THE MAPS CREATED AT THE CREATION OF A GAME (4 MAPS)
     player *p;
     map **mapSet;
+    map **lastMapSet;
+    map ***previousDiffMapSet;
     int nbOfMap;
 }game;
+
+void setMapSetDifference(map **newMapSet, map **diffMapSet);
 int caseValToItemVal(int caseValue);
 int findTargetValueCase(game *myGame, int posX, int posY);
 int findTargetXPos(game *myGame);
 int findTargetYPos(game *myGame);
 
+
 // FUNCTION FOR CREATING A NEW GAME
 game *newGame(){
-    game *myGame = malloc(sizeof(myGame));
-    myGame->mapSet = malloc(4*sizeof(map) + 4 * 11 * sizeof(int));
+    int nbCaseMap1 = 8*8;
+    int nbCaseMap2 = 12*12;
+    int nbCaseMap3 = 15*15;
+    int nbCaseMapset = nbCaseMap1 + nbCaseMap2 + nbCaseMap3;
+
+    game *myGame = malloc(sizeof(myGame) + 2*sizeof(map **)+sizeof(map ***) + sizeof(int) +11*nbCaseMapset*sizeof(int));
+
+    myGame->mapSet = malloc(3*sizeof(map **) + nbCaseMapset*sizeof(int));
+    initMapSet(myGame->mapSet);
+    myGame->mapSet[0] = initMap(1);
+    myGame->mapSet[1] = initMap(2);
+    myGame->mapSet[2] = initMap(3);
+    /*
+    myGame->mapSet = malloc(3*sizeof(map) + nbCaseMapset * sizeof(int));
+    assert(myGame->mapSet);
     // BASICALLY WE MAKE :
     //      MAP 1 : 8 ROWS AND COLS, RANK 1
     //      MAP 2 : 12"                  "2
     //      MAP 3 : 15"                  "3
-    //      MAP 4 : 20"                  "3 -> IN 4TH POSITION BUT SAME PARAMETERS THAN MAP 3
-    myGame->mapSet[0] = initMap(8, 8, 1);
-    myGame->mapSet[1] = initMap(12, 12, 2);
-    myGame->mapSet[2] = initMap(15, 15, 3);
-    myGame->mapSet[3] = initMap(20, 20, 3);
+    myGame->mapSet[0]->map = malloc(sizeof(map *)+nbCaseMap1*sizeof(int));
+    */
+
+
+    
+    int nbCaseMapSetFrame = 5*nbCaseMapset;
+    
+    myGame->lastMapSet = malloc(3*sizeof(map) + nbCaseMapset * sizeof(int));
+    myGame->lastMapSet[0] = initMap(1);
+    myGame->lastMapSet[1] = initMap(2);
+    myGame->lastMapSet[2] = initMap(3);
+    for(int i=0; i<3; i++)
+    {
+        initMapToZero(myGame->lastMapSet[i]);
+    }
     // PUT THE PLAYER ON THE FIRST MAP ON A RAND POSITION
     putPlayer(myGame->mapSet[0]);
-
     myGame->p = newPlayer();
 
     // UPDATE PLAYER STRUCT ATTRIBUTES
     myGame->p->posX = getXPlayerPos(myGame->mapSet[0]);
     myGame->p->posY = getYPlayerPos(myGame->mapSet[0]);
     myGame->p->currentMap = myGame->mapSet[0]->rank;
-    myGame->nbOfMap = 4;
+    //copyMapSet(myGame->lastMapSet, myGame->mapSet);
+
+    myGame->previousDiffMapSet = malloc(5*(sizeof(myGame->mapSet)+ nbCaseMapSetFrame*sizeof(int)));
+    assert(myGame->previousDiffMapSet);
+    initMapSetFrame(myGame->previousDiffMapSet, myGame->mapSet);
+    //setAllMapSetAsCurrentMapSet(myGame->previousDiffMapSet, myGame->mapSet);
+    printf("POSX : %d POSY : %d\n", myGame->p->posX, myGame->p->posY);
+    myGame->nbOfMap = 3;
+    printf("GAME CREATED\n");
     
     return myGame;
 }
@@ -54,6 +89,15 @@ void closeGame(game *myGame){
     freeMapSet(myGame->mapSet, 4);
     freePlayer(myGame->p);
     free(myGame);
+}
+
+void resetPlayerPos(game *myGame)
+{
+    putPlayer(myGame->mapSet[myGame->p->currentMap-1]);
+    myGame->mapSet[myGame->p->currentMap-1]->map[myGame->p->posX][myGame->p->posY] = 0;
+    
+    myGame->p->posX = getXPlayerPos(myGame->mapSet[myGame->p->currentMap-1]);
+    myGame->p->posY = getYPlayerPos(myGame->mapSet[myGame->p->currentMap-1]);
 }
 
 void printPlayer(game *myGame){
@@ -456,6 +500,7 @@ void dealWithPNJ(game *myGame)
         printf("\n\n\nWhat can I do for you ?\n");
         printf("\t> Make crafting        - Press '1'\n");
         printf("\t> Repair my items      - Press '2'\n");
+        printf("\t> Drop items           - Press '3'\n");
         printf("\t> Nothing, resume game - Press 'x'\n");
 
         scanf("%s", input);
@@ -577,20 +622,24 @@ void makeAction(game *myGame){
     assert(myGame);
     int posX = findTargetXPos(myGame);
     int posY = findTargetYPos(myGame);
+
     if(posX == -1 || posY == -1)
         return;
+    
     int caseValue = findTargetValueCase(myGame, posX, posY);
     if(caseValue == _INFRANCHISSABLE_)
         return;
     switch (findCaseType(caseValue))
     {
     case _IS_RESOURCE_:
+        copyMapSet(myGame->lastMapSet, myGame->mapSet);
         farmResource(myGame, caseValue, posX, posY);
         return;
     
     case _IS_TP_CASE_ :
     printf("###\n#\nMAKING TP\n###\n");
         makeTp(myGame, caseValue);
+        copyMapSet(myGame->lastMapSet, myGame->mapSet);
         return;
     
     case _IS_MONSTER_CASE_ :
@@ -640,4 +689,84 @@ int caseValToItemVal(int caseValue){
             return _IS_MONSTER_CASE_;
         return _INFRANCHISSABLE_;
     }
+}
+
+map **getDiffMapSets(game *myGame)
+{
+    int nbMapSetCase = ((myGame->mapSet[0]->rows) * (myGame->mapSet[0]->cols))+ ((myGame->mapSet[1]->rows) * (myGame->mapSet[1]->cols))+ ((myGame->mapSet[2]->rows) * (myGame->mapSet[2]->cols));
+
+    map **myDiffMapSet = malloc(3*sizeof(map *) + nbMapSetCase*sizeof(int));
+    initMapSet(myDiffMapSet);
+
+    for(int i=0; i<3; i++)
+    {
+            myDiffMapSet[i] = initMap(i+1);
+            initMapToZero(myDiffMapSet[i]);
+    }
+
+    for(int i=0; i<3; i++)
+    {
+        for(int j=0; j<myDiffMapSet[i]->rows; j++)
+        {
+            for(int k=0; k<myDiffMapSet[i]->cols; k++)
+            {
+                if(myGame->lastMapSet[i]->map[j][k] != myGame->mapSet[i]->map[j][k] && myGame->mapSet[i]->map[j][k] != 1)
+                {
+                    myDiffMapSet[i]->map[j][k] = myGame->lastMapSet[i]->map[j][k];
+                }
+            }
+        }
+    }
+
+    return myDiffMapSet;
+}
+
+void applyMapSetsDiff(game *myGame)
+{
+    for(int i=0; i<3; i++)
+    {
+        for(int j=0; j< myGame->mapSet[i]->rows; j++)
+        {
+            for(int k=0; k<myGame->mapSet[i]->cols; k++)
+            {
+                if(myGame->previousDiffMapSet[4][i]->map[j][k] != 0)
+                {
+                    if(myGame->mapSet[i]->map[j][k] != _PLAYER_)
+                        myGame->mapSet[i]->map[j][k] = myGame->previousDiffMapSet[4][i]->map[j][k];
+                    else
+                        myGame->previousDiffMapSet[3][i]->map[j][k] = myGame->previousDiffMapSet[4][i]->map[j][k];
+                }
+            }
+        }
+    }
+}
+
+
+void updateDiffMapSetFrames(game *myGame)
+{
+    int nbMapSetCase = ((myGame->mapSet[0]->rows) * (myGame->mapSet[0]->cols))+ ((myGame->mapSet[1]->rows) * (myGame->mapSet[1]->cols))+ ((myGame->mapSet[2]->rows) * (myGame->mapSet[2]->cols));
+    
+    
+    applyMapSetsDiff(myGame);
+    
+
+    map **myDiffMapSet = malloc(3*sizeof(map *) + nbMapSetCase*sizeof(int));
+    initMapSet(myDiffMapSet);
+    myDiffMapSet[0] = initMap(1);
+    myDiffMapSet[1] = initMap(2);
+    myDiffMapSet[2] = initMap(3);
+
+    for(int i=0; i<3; i++)
+    {
+        initMapToZero(myDiffMapSet[i]);
+    }
+            
+    myDiffMapSet = getDiffMapSets(myGame);
+
+    
+    for(int i=4; i>0; i--){
+        copyMapSet(myGame->previousDiffMapSet[i], myGame->previousDiffMapSet[i-1]);
+    }
+    copyMapSet(myGame->previousDiffMapSet[0], myDiffMapSet);
+    
 }

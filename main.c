@@ -72,6 +72,11 @@ void takeInput(game *myGame){
     }
     if (strcmp(input, "a")==0 || strcmp(input, "A")==0) {
         makeAction(myGame);
+        updateDiffMapSetFrames(myGame);
+        return;
+    }
+    if (strcmp(input, "p")==0) {
+        resetPlayerPos(myGame);
         return;
     }
     printf("    +-----------------------------------------------------------------------------+\n");
@@ -85,14 +90,16 @@ void takeInput(game *myGame){
 int main() {
     game *myGame = newGame();
     // LAUNCH THE GAME WITH A LOOP
-    myGame->p->level = 6;
+    myGame->p->level = 7;
     int counter = 0;
     while(counter < 3000){
         printAll(myGame);
         takeInput(myGame);
+        
+
         counter++;
     }
     
-    closeGame(myGame);
+    //closeGame(myGame);
     return 0;
 }
