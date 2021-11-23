@@ -19,11 +19,31 @@ typedef struct game{
     int nbOfMap;
 }game;
 
-void setMapSetDifference(map **newMapSet, map **diffMapSet);
-int caseValToItemVal(int caseValue);
+game *newGame();
+void closeGame(game *myGame);
+void resetPlayerPos(game *myGame);
+void printPlayer(game *myGame);
+void printAll(game *myGame);
+void moveUp(game *myGame);
+void moveDown(game *myGame);
+void moveLeft(game *myGame);
+void moveRight(game *myGame);
 int findTargetValueCase(game *myGame, int posX, int posY);
 int findTargetXPos(game *myGame);
 int findTargetYPos(game *myGame);
+void farmResource(game *myGame, int caseValue, int posX, int posY);
+void makeTp(game *myGame, int caseValue);
+void dealWithPNJ(game *myGame);
+void makeAction(game *myGame);
+int caseValToItemVal(int caseValue);
+map **getDiffMapSets(game *myGame);
+void applyMapSetsDiff(game *myGame);
+void updateDiffMapSetFrames(game *myGame);
+void openBag(game *myGame);
+void addWeapon(game *myGame, item **myInventory, int index);
+
+
+
 
 
 // FUNCTION FOR CREATING A NEW GAME
@@ -376,7 +396,6 @@ int findTargetYPos(game *myGame){
     }
 }
 
-
 void farmResource(game *myGame, int caseValue, int posX, int posY){
     assert(myGame);
     assert(myGame->p);
@@ -488,7 +507,6 @@ void makeTp(game *myGame, int caseValue){
             return;
     }
 }
-
 
 void dealWithPNJ(game *myGame)
 {
@@ -741,7 +759,6 @@ void applyMapSetsDiff(game *myGame)
     }
 }
 
-
 void updateDiffMapSetFrames(game *myGame)
 {
     int nbMapSetCase = ((myGame->mapSet[0]->rows) * (myGame->mapSet[0]->cols))+ ((myGame->mapSet[1]->rows) * (myGame->mapSet[1]->cols))+ ((myGame->mapSet[2]->rows) * (myGame->mapSet[2]->cols));
@@ -769,4 +786,416 @@ void updateDiffMapSetFrames(game *myGame)
     }
     copyMapSet(myGame->previousDiffMapSet[0], myDiffMapSet);
     
+}
+
+void addWeapon(game *myGame, item **myInventory, int index){
+    assert(myInventory);
+    if(findType(myInventory[index]->value) != 'w')
+        return;
+    for(int i=0; i<3; i++){
+        if(myGame->p->weaponSet[i]->value == _ESPACE_LIBRE){
+            free(myGame->p->weaponSet[i]);
+            myGame->p->weaponSet[i] = malloc(sizeof(item *) + 9 * sizeof(int));
+            assert(myGame->p->weaponSet[i]);
+            myGame->p->weaponSet[i] = createItem(myInventory[index]->value, 1);
+            myGame->p->weaponSet[i]->durability = myGame->p->inventory[index]->durability;
+            assert(myGame->p->weaponSet[i]);
+            return;
+        }
+    }
+}
+
+void moveWeaponToInventory(game *myGame, item **myWeaponSet, int index)
+{
+    assert(myGame);
+    assert(myWeaponSet);
+    assert(myGame->p->inventory);
+
+    for(int i=0; i<10; i++)
+    {
+        if(myGame->p->inventory[i]->value == _ESPACE_LIBRE)
+        {
+            free(myGame->p->weaponSet[i]);
+            myGame->p->weaponSet[i] = malloc(sizeof(item *) + 9 * sizeof(int));
+            assert(myGame->p->weaponSet[i]);
+            myGame->p->inventory[i] = createItem(myWeaponSet[index]->value, 1);
+            myGame->p->inventory[i]->durability = myGame->p->weaponSet[index]->durability;
+            assert(myGame->p->inventory[i]);
+            myWeaponSet[index] = createItem(_ESPACE_LIBRE, 0);
+            assert(myWeaponSet[index]);
+            return;
+        }
+    }    
+}
+
+void openBag(game *myGame)
+{
+    assert(myGame);
+    assert(myGame->p);
+    assert(myGame->p->inventory);
+    char input[50];
+    printf("\n\n\n");
+    printf("\t             ___________       \n");
+    printf("\t  ___________/==========/|_____________\n");
+    printf("\t /           ||         ||            /|\n");
+    printf("\t/____________________________________/ |\n");
+    printf("\t|-----------------------------------|  |\n");
+    printf("\t|    > Manage inventory  - Press '0'|  |\n");
+    printf("\t+-----------------------------------|  |\n");
+    printf("\t|-----------------------------------|  |\n");
+    printf("\t|    > Manage weapon set - Press '1'|  |\n");
+    printf("\t+-----------------------------------|  |\n");
+    printf("\t|-----------------------------------|  |\n");
+    printf("\t|    > Manage armor      - Press '2'|  |\n");
+    printf("\t+-----------------------------------|  |\n");
+    printf("\t+-----------------------------------|  |\n");
+    printf("\t|    > Close bag         - Press 'x'| /\n");
+    printf("\t|___________________________________|/\n");
+
+
+        scanf("%s", input);
+
+        if(strcmp(input, "0") == 0)
+        {
+            printInventory(myGame->p);
+            printf("\t> Select an item - Press an id [0-9]\n");
+            scanf("%s", input);
+            if(input[0] < '0' || input[0] > '9')
+            {
+                printf("Invalid value\n");
+                openBag(myGame);
+                return;
+            }
+            int id = atoi(input);
+            if(id > 9)
+            {
+                printf("Invalid value\n");
+                openBag(myGame);
+                return;
+            }
+
+            printf("\t> [%d] ", id);
+            printResource(myGame->p->inventory[id]->value);
+            printf(" :\n");
+            switch (findType(myGame->p->inventory[id]->value))
+            {
+            case 'r':
+                printf("\t> Delete '");
+                printResource(myGame->p->inventory[id]->value);
+                printf("'? - Press 'y' or 'n'\n");
+                scanf("%s", input);
+                if(strcmp("y", input)==0)
+                {
+                    int nbResource = getResourceQuantity(myGame->p->inventory, myGame->p->inventory[id]->value);
+                    printf("\t> How many (you have %d) ? - Press a value or 'a' for all:", nbResource);
+                    scanf("%s", input);
+                    int nbToDelete = atoi(input);
+                    if(strcmp("a", input)==0){
+                        nbToDelete = getResourceQuantity(myGame->p->inventory, myGame->p->inventory[id]->value);
+                    }
+                    if(nbToDelete > nbResource || nbToDelete < 1)
+                    {
+                        printf("\tCan't get rid of %d x ", nbToDelete);
+                        printResource(myGame->p->inventory[id]->value);
+                        printf("\n");
+                        openBag(myGame);
+                        return;
+                    }
+                    else
+                    {
+                        printf("\t> Are you sure to get rid of %d ", nbToDelete);
+                        printResource(myGame->p->inventory[id]->value);
+                        printf("? - Press 'y' or 'n'\n");
+                        scanf("%s", input);
+                        if(strcmp("y", input)==0)
+                        {
+                            printf("\t %d x ", nbToDelete);
+                            printResource(myGame->p->inventory[id]->value);
+                            printf(" removed\n");
+                            for(int i=0; i<nbToDelete; i++)
+                            {
+                                delItem(myGame->p->inventory, id);
+                            }
+                            openBag(myGame);
+                            return;
+                        }
+                        if(strcmp("n", input)==0)
+                        {
+                            openBag(myGame);
+                            return;
+                        }
+                    }
+                }
+                openBag(myGame);
+                return;
+            case 'w':
+                printf("\t> Add to weapon set - Press '0'\n");
+                printf("\t> Delete            - Press '1'\n");
+                printf("\t> Exit              - Press 'x'\n");
+                scanf("%s", input);
+                if(strcmp("0", input)==0)
+                {
+                    if(isFullWeaponSet(myGame->p->weaponSet)==0)
+                    {
+                        printResource(myGame->p->inventory[id]->value);
+                        printf(" added to weapon set\n");
+                        addWeapon(myGame, myGame->p->inventory, id);
+                        delItem(myGame->p->inventory, id);
+                        openBag(myGame);
+                        return;
+                    }
+                    else
+                    {
+                        printWeaponSet(myGame->p);
+                        printf("Weapon set is full\n");
+                        openBag(myGame);
+                        return;
+                    }
+                }
+                if(strcmp("1", input)==0)
+                {
+                    printf("\t> Are you sure to get rid of '");
+                    printResource(myGame->p->inventory[id]->value);
+                    printf("'? - Press 'y' or 'n'\n");
+                    scanf("%s", input);
+                    if(strcmp("y", input)==0)
+                    {
+                        printResource(myGame->p->inventory[id]->value);
+                        printf(" has been deleted\n");
+                        delItem(myGame->p->inventory, id);
+                        openBag(myGame);
+                        return;
+                    }
+                    if(strcmp("n", input)==0)
+                    {
+                        openBag(myGame);
+                        return;
+                    }
+                    openBag(myGame);
+                    return;
+                }
+                openBag(myGame);
+                return;
+            case 's':
+                printf("\t> Equip  - Press '0'\n");
+                printf("\t> Delete - Press '1'\n");
+                printf("\t> Exit   - Press 'x'\n");
+                scanf("%s", input);
+                if(strcmp("0", input)==0)
+                {
+                    if(myGame->p->plastron->value == 0)
+                    {
+                        printf("\t'");
+                        printResource(myGame->p->inventory[id]->value);
+                        printf("' is equiped\n");
+                        myGame->p->plastron = createItem(myGame->p->inventory[id]->value, 1);
+                        delItem(myGame->p->inventory, id);
+                        openBag(myGame);
+                        return;
+                    }
+                    else{
+                        printf("\tYou already wear an armor (");
+                        printResource(myGame->p->plastron->value);
+                        printf(")\n");
+                        openBag(myGame);
+                        return;
+                    }
+                }
+                if(strcmp("1", input)==0)
+                {
+                    printf("\t> Are you sure to get rid of '");
+                    printResource(myGame->p->inventory[id]->value);
+                    printf("'? - Press 'y' or 'n'\n");
+                    scanf("%s", input);
+                    if(strcmp("y", input)==0)
+                    {
+                        printf("\t'");
+                        printResource(myGame->p->inventory[id]->value);
+                        printf("' has been deleted\n");
+                    }
+                    openBag(myGame);
+                    return;
+                }
+                openBag(myGame);
+                return;
+            case 'h':
+                printf("\t> Drink (%dhp healed) - Press '0'\n", myGame->p->inventory[id]->healPt);
+                printf("\t> Delete              - Press '1'\n");
+                printf("\t> Exit                - Press 'x'\n");
+                scanf("%s", input);
+                if(strcmp("0", input)==0)
+                {
+                    if(myGame->p->hp == myGame->p->currentHp)
+                    {
+                        printf("You already have all your hp\n");
+                        openBag(myGame);
+                        return;
+                    }
+                    else
+                    {
+                        printf("\t'");
+                        printResource(myGame->p->inventory[id]->value);
+                        printf("' %dhp\n", myGame->p->inventory[id]->healPt);
+                        myGame->p->currentHp += myGame->p->inventory[id]->healPt;
+                        delItem(myGame->p->inventory, id);
+                        if(myGame->p->currentHp > myGame->p->hp)
+                        {
+                            myGame->p->currentHp = myGame->p->hp;
+                            openBag(myGame);
+                            return;
+                        }
+                    }
+                }
+                if(strcmp("1", input)==0)
+                {
+                    printf("\tAre you sure you want to get rid of '");
+                    printResource(myGame->p->inventory[id]->value);
+                    printf("'? - Press 'y' or 'n'\n");
+                    scanf("%s", input);
+                    if(strcmp("y", input)==0)
+                    {
+                        printf("\t'");
+                        printResource(myGame->p->inventory[id]->value);
+                        printf("' has been deleted\n");
+                        delItem(myGame->p->inventory, id);
+                        openBag(myGame);
+                        return;
+                    }
+                }
+                openBag(myGame);
+                return;
+            case 't':
+                printf("\t> Delete - Press '0'\n");
+                printf("\t> Exit   - Press 'x'\n");
+                scanf("%s", input);
+                if(strcmp("0", input)==0)
+                {
+                    printf("Are you sure to get rid of this '");
+                    printResource(myGame->p->inventory[id]->value);
+                    printf("'? - Press 'y' or 'n'\n");
+                    scanf("%s", input);
+                    if(strcmp("y", input)==0)
+                    {
+                        printf("'");
+                        printResource(myGame->p->inventory[id]->value);
+                        printf("' has been deleted\n");
+                        delItem(myGame->p->inventory, id);
+                        openBag(myGame);
+                        return;
+                    }
+                    openBag(myGame);
+                    return;
+                }
+                openBag(myGame);
+                return;
+            
+            default:
+                openBag(myGame);
+            }
+        }
+        if(strcmp(input, "1") == 0)
+        {
+            printWeaponSet(myGame->p);
+            printf("\t> Select a weapon - Press an id [0-2]\n");
+            scanf("%s", input);
+            if(input[0] < '0' || input[0] > '2')
+            {
+                printf("Invalid value\n");
+                openBag(myGame);
+                return;
+            }
+            int id = atoi(input);
+            if(id > 2)
+            {
+                printf("Invalid value\n");
+                openBag(myGame);
+                return;
+            }
+            printf("\t> [%d] ", id);
+            printResource(myGame->p->weaponSet[id]->value);
+            printf(" :\n");
+            printf("\t> Put in inventory - Press '0'");
+            printf("\t> Delete           - Press '1'\n");
+            printf("\t> Exit             - Press 'x'\n");
+            scanf("%s", input);
+            if(strcmp("0", input) == 0)
+            {
+                if(isFullInventory(myGame->p->inventory) == 1)
+                {
+                    printf("\t Inventory is already full\n");
+                    openBag(myGame);
+                    return;
+                }
+                else
+                {
+                    printf("\t'");
+                    printResource(myGame->p->weaponSet[id]->value);
+                    printf("' has been replaced in your inventory\n");
+                    moveWeaponToInventory(myGame, myGame->p->weaponSet, id);
+                    openBag(myGame);
+                    return;
+                }
+            }
+            openBag(myGame);
+            return;
+        }
+        if(strcmp(input, "2") == 0)
+        {
+            if(myGame->p->plastron->value == _ESPACE_LIBRE)
+            {
+                printf("You don't have armor equiped\n");
+                openBag(myGame);
+                return;
+            }
+            printf("\t You wear a '");
+            printResource(myGame->p->plastron->value);
+            printf("' which protects you from %d%% damage\n\n", myGame->p->plastron->dmgResist);
+            printf("\t> Put in inventory - Press '0'\n");
+            printf("\t> Delete           - Press '1'\n");
+            printf("\t> Exit             - Press 'x'\n");
+            scanf("%s", input);
+            if(strcmp("0", input) == 0)
+            {
+                if(isFullInventory(myGame->p->inventory) == 1)
+                {
+                    printf("\t> Inventory is already full\n");
+                    openBag(myGame);
+                    return;
+                }
+                else
+                {
+                    printf("\t'");
+                    printResource(myGame->p->plastron->value);
+                    printf("' has been replaced in inventory\n");
+                    addItem(myGame->p->inventory, myGame->p->plastron->value);
+                    free(myGame->p->plastron);
+                    myGame->p->plastron = createItem(_ESPACE_LIBRE, 0);
+                    assert(myGame->p->plastron);
+                    openBag(myGame);
+                    return;
+                }
+            }
+            if(strcmp("1", input) == 0)
+            {
+                printf("\tDelete '");
+                printResource(myGame->p->plastron->value);
+                printf("'? - Press 'y' or 'n'\n");
+                scanf("%s", input);
+                if(strcmp("y", input) == 0)
+                {
+                    printf("'");
+                    printResource(myGame->p->plastron->value);
+                    printf("' has been deleted\n");
+                    free(myGame->p->plastron);
+                    myGame->p->plastron = createItem(_ESPACE_LIBRE, 0);
+                    assert(myGame->p->plastron);
+                    openBag(myGame);
+                    return; 
+                }
+                openBag(myGame);
+                return;
+            }
+            openBag(myGame);
+            return;
+        }
 }

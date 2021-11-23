@@ -193,37 +193,6 @@ item **initWeaponSet(){
     return myWeaponSet;
 }
 
-void addWeapon(item **myWeaponSet, int value){
-    assert(myWeaponSet);
-    if(findType(value) != 'w')
-        return;
-    for(int i=0; i<3; i++){
-        if(myWeaponSet[i]->value == _ESPACE_LIBRE){
-            free(myWeaponSet[i]);
-            myWeaponSet[i] = malloc(sizeof(item));
-            assert(myWeaponSet[i]);
-            myWeaponSet[i] = createItem(value, 1);
-            assert(myWeaponSet[i]);
-            return;
-        }
-    }
-}
-
-void equipWeaponFromInventory(item **myWeaponSet, item **myInventory, int value, int durability){
-    assert(myWeaponSet);
-    int index = itemAlreadyPresent(myInventory, value);
-    if(index < 0 || index > 10)
-        return;
-    for(int i=0; i<3; i++){
-        if(myWeaponSet[i]->value == _ESPACE_LIBRE){
-            myWeaponSet[i] = createItem(value, 1);
-            myWeaponSet[i]->durability = durability;
-            delItem(myInventory, index);
-            return;
-        }
-    }
-}
-
 void delWeapon(item **myWeaponSet, int index){
 
     assert(myWeaponSet);
@@ -559,6 +528,17 @@ void freeCraftsList(item **myCraftsList, int length)
         freeItem(myCraftsList[i]);
     }
     free(myCraftsList);
+}
+
+int isFullWeaponSet(item **myWeaponSet)
+{
+    assert(myWeaponSet);
+    for(int i=0; i<3; i++)
+    {
+        if(myWeaponSet[i]->value == _ESPACE_LIBRE)
+            return 0;
+    }
+    return 1;
 }
 
 int isFullInventory(item **myInventory)

@@ -15,6 +15,10 @@ void printCommands(){
     printf("         | |  |    | GO RIGHT   : Press 'd' |  |  | |\n");
     printf("         | |  |    +------------------------+  |  | |\n");
     printf("         | |  |                                |  | |\n");
+    printf("         | |  |  OPEN-----------------------+  |  | |\n");
+    printf("         | |  |    | BAG        : Press 'o' |  |  | |\n");
+    printf("         | |  |    +------------------------+  |  | |\n");
+    printf("         | |  |                                |  | |\n");
     printf("         | |  |  CONSULT--------------------+  |  | |\n");
     printf("         | |  |    | INVENTORY  : Press 'i' |  |  | |\n");
     printf("         | |  |    | WEAPON SET : Press 'w' |  |  | |\n");
@@ -79,6 +83,10 @@ void takeInput(game *myGame){
         resetPlayerPos(myGame);
         return;
     }
+    if (strcmp(input, "o")==0) {
+        openBag(myGame);
+        return;
+    }
     printf("    +-----------------------------------------------------------------------------+\n");
     printf("    |                                                                             |\n");
     printf("    | %s : Invalid input (Type 'h' and press 'Enter' to see commands instructions) |\n", input);
@@ -89,6 +97,11 @@ void takeInput(game *myGame){
 
 int main() {
     game *myGame = newGame();
+    addItem(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
+    addItem(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
+    addItem(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
+    int index = itemAlreadyPresent(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
+    myGame->p->inventory[index]->durability -= 1;
     // LAUNCH THE GAME WITH A LOOP
     myGame->p->level = 7;
     int counter = 0;

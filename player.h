@@ -47,8 +47,8 @@ player *newPlayer()
     
     p->weaponSet = malloc(3*sizeof(item *) + 3*9*sizeof(int));
     p->weaponSet = initWeaponSet();
-    addWeapon(p->weaponSet, _EPEE_EN_BOIS_);
-    addWeapon(p->weaponSet, _HACHE_EN_PIERRE_);
+    p->weaponSet[0] = createItem(_EPEE_EN_BOIS_, 1);
+    
 
     p->plastron = createItem(_ESPACE_LIBRE, 0);
     
