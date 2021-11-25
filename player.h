@@ -16,6 +16,10 @@ typedef struct player{
     item **inventory;
     item **weaponSet;
     item *plastron;
+    int activeWeapon;
+    int currentXp;
+    int nextLevel;
+
 }player;
 
 void craftItem(player *p, int myCraftValue);
@@ -30,9 +34,9 @@ player *newPlayer();
 // CREATE A NEW PLAYER
 player *newPlayer()
 {
-    player *p = malloc(sizeof(player) + 7 * sizeof(int));
+    player *p = malloc(sizeof(player *) + 10 * sizeof(int));
     assert(p);
-    p->level = 0;
+    p->level = 1;
     p->currentHp = 100;
     p->hp = 100; // MAX HP
     p->currentMap = 1;
@@ -48,6 +52,9 @@ player *newPlayer()
     p->weaponSet = malloc(3*sizeof(item *) + 3*9*sizeof(int));
     p->weaponSet = initWeaponSet();
     p->weaponSet[0] = createItem(_EPEE_EN_BOIS_, 1);
+    p->activeWeapon = 0;
+    p->currentXp = 0;
+    p->nextLevel = 10;
     
 
     p->plastron = createItem(_ESPACE_LIBRE, 0);
@@ -133,7 +140,9 @@ void printInventory(player *p)
             if(p->inventory[i]->quantity < 10)
                 printf(" ");
             printf("| ");
-             printf("   Weapon   |     %d     |    %d", p->inventory[i]->durability, p->inventory[i]->damage);
+            printf("   Weapon   |     %d      |    %d", p->inventory[i]->durability, p->inventory[i]->damage);
+            if(p->inventory[i]->durability < 10)
+                printf(" ");
             break;
 
         case 't':
@@ -142,7 +151,7 @@ void printInventory(player *p)
             if(p->inventory[i]->quantity < 10)
                 printf(" ");
             printf("| ");
-             printf("   Tool     |      %d", p->inventory[i]->durability);
+            printf("   Tool     |      %d", p->inventory[i]->durability);
             break;
 
         case 'r':

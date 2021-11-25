@@ -1,19 +1,18 @@
+#ifndef MAP_H
+#define MAP_H
 #include "malloc_world.h"
 #include "case_values.h"
 
-#ifndef MAP_H
-#define MAP_H
-#endif
+#define ROWS_MAP_1 12
+#define COLS_MAP_1 12
+#define ROWS_MAP_2 15
+#define COLS_MAP_2 15
+#define ROWS_MAP_3 19
+#define COLS_MAP_3 19
 
-#ifndef _IS_WOOD_
 #define _IS_WOOD_ 103
-#endif
-#ifndef _IS_ROC_
 #define _IS_ROC_ 104
-#endif
-#ifndef _IS_PLANT_
 #define _IS_PLANT_ 105
-#endif
 
 typedef struct map
 {
@@ -68,7 +67,7 @@ void putTrees(map *myMap){
     int nbTrees, x, y, i, val;
     // NUMBER OF TREES DEPENDS ON THE RANK OF THE MAP
     nbTrees = myMap->nbTrees;
-    val = myMap->rank == 1 ? 5 : (myMap->rank == 2 ? 8 : 11);
+    val = myMap->rank == 1 ? _BOIS_1_ : (myMap->rank == 2 ? _BOIS_2_ : _BOIS_3_);
     i = 0;
 
     while(i<nbTrees){
@@ -81,6 +80,28 @@ void putTrees(map *myMap){
             // PUT TREE VALUE ON THE [X, Y] RANDOM POSITION GENERATED
             // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = val;
+            i++;
+        }
+    }
+}
+
+void putWalls(map *myMap)
+{
+    int nbWalls, x, y, i;
+    // NUMBER OF WALLS DEPENDS ON THE RANK OF THE MAP
+    nbWalls = (myMap->rows+myMap->cols)/2;
+    i = 0;
+
+    while(i<nbWalls){
+        // RANDOM POSITION ON MAP
+        x = rand()%(myMap->rows);
+        y = rand()%(myMap->cols);
+        
+
+        if(myMap->map[x][y]== _FREE_CASE_){
+            // PUT WALL VALUE ON THE [X, Y] RANDOM POSITION GENERATED
+            // ONLY IF THE MAP[X, Y] CASE IS FREE
+            myMap->map[x][y] = _INFRANCHISSABLE_;
             i++;
         }
     }
@@ -117,7 +138,7 @@ void putPlants(map *myMap){
     int nbPlants, x, y, i, val;
     // NUMBER OF PLANTS DEPENDS ON THE RANK OF THE MAP
     nbPlants = myMap->nbPlants;
-    val = myMap->rank == 1 ? 3 : (myMap->rank == 6 ? 8 : 9);
+    val = myMap->rank == 1 ? _PLANT_1_ : (myMap->rank == 2 ? _PLANT_2_ : _PLANT_3_);
     i = 0;
 
     while(i<nbPlants){
@@ -212,7 +233,7 @@ void putRocs(map *myMap){
     int nbRocs, x, y, i, val;
     // NUMBER OF ROCS DEPENDS ON THE RANK OF THE MAP
     nbRocs = myMap->nbPlants;
-    val = myMap->rank == 1 ? 4 : (myMap->rank == 2 ? 7 : 10);
+    val = myMap->rank == 1 ? _ROC_1_ : (myMap->rank == 2 ? _ROC_2_ : _ROC_3_);
     i = 0;
 
     while(i<nbRocs){
@@ -263,6 +284,7 @@ void putPlayer(map *myMap){
 }
 
 void putAll(map *myMap){
+    putWalls(myMap);
     putTrees(myMap);
     putPlants(myMap);
     putRocs(myMap);
@@ -273,20 +295,20 @@ void putAll(map *myMap){
 
 map *initMap(int rank){
     // CREATING MAP TAB OF TABS ALLOCATING INT TAB FIRSTLY ...
-    int nbCase = rank == 1 ? 8*8 : (rank == 2 ? 12*12 : 15*15);
+    int nbCase = rank == 1 ? ROWS_MAP_1*COLS_MAP_1 : (rank == 2 ? ROWS_MAP_2*COLS_MAP_2 : ROWS_MAP_3*COLS_MAP_3);
     
     map *myMap = malloc(sizeof(myMap) + nbCase + 11*sizeof(int));
     assert(myMap);
-    myMap->rows = rank == 1 ? 8 : (rank == 2 ? 12 : 15);
-    myMap->cols = rank == 1 ? 8 : (rank == 2 ? 12 : 15);
+    myMap->rows = rank == 1 ? ROWS_MAP_1 : (rank == 2 ? ROWS_MAP_2 : ROWS_MAP_3);
+    myMap->cols = rank == 1 ? COLS_MAP_1 : (rank == 2 ? COLS_MAP_2 : COLS_MAP_3);
     myMap->map = malloc(sizeof(int **) + + myMap->rows*sizeof(int *) + nbCase*sizeof(int));
     assert(myMap->map);
     myMap->rank = rank;
     // NUMBER OF EACH RESOURCE (TREES, PLANTS, MONSTERS, ROCS) DEPENDS ON THE RANK OF THE MAP
-    myMap->nbTrees = 3 + 4 * rank;
-    myMap->nbMonsters = 10 + 3 * rank;
-    myMap->nbRocs = 3 + 4 * rank;
-    myMap->nbPlants = 3 + 4 * rank;
+    myMap->nbTrees = (myMap->rows+myMap->cols)/2;
+    myMap->nbMonsters = (myMap->rows+myMap->cols)/2/2 ;
+    myMap->nbRocs = (myMap->rows+myMap->cols)/2;
+    myMap->nbPlants = (myMap->rows+myMap->cols)/2;
     // TREE VALUE ON MAP DEPENDS ON THE RANK OF THE MAP [MAP 1 : 5] [MAP 2 : 8] [MAP 3 : 11]
     myMap->treeVal = myMap->rank == 1 ? 5 : (myMap->rank == 2 ? 8 : 11);
     // PLANT VALUE ON MAP DEPENDS ON THE RANK OF THE MAP [MAP 1 : 3] [MAP 2 : 6] [MAP 3 : 9]
@@ -315,101 +337,6 @@ map *initMap(int rank){
     return myMap;
 }
 
-void printMap(map *myMap){
-    assert(myMap);
-    assert(myMap->map);
-    int isPlayer = 0;
-    if (myMap->rank == 1){
-        printf("\n                __________________________\n");
-        printf("               /                          \\\n");
-        printf("               |           MAP %d          |\n", myMap->rank);        
-        printf("               |                          |\n");
-        printf("               +--------------------------+\n");
-        printf("               |                          |\n");
-        for(int i=0; i<myMap->rows; i++){
-            printf("               |  ");
-            for(int j=0; j<myMap->cols; j++){
-                printf("%d ", myMap->map[i][j]);
-                if(myMap->map[i][j] / 10 == 0 && myMap->map[i][j] > -1){
-                    printf(" ");
-                }
-                if(myMap->map[i][j] == 1 && isPlayer == 0){
-                    isPlayer = 1;
-                }
-            }
-            printf("|");
-            if(isPlayer == 1){
-                printf(" <- Player is on this line");
-                isPlayer = 0;
-            }
-            printf("\n");
-        }
-        printf("               |                          |\n");
-        printf("               \\__________________________/\n");
-        return;
-    }
-
-    if (myMap->rank == 2){
-        printf("                ______________________________________\n");
-        printf("               /                                      \\\n");
-        printf("               |                 MAP %d                |\n", myMap->rank);
-        printf("               |                                      |\n");
-        printf("               +--------------------------------------+\n");
-        printf("               |                                      |\n");
-        for(int i=0; i<myMap->rows; i++){
-            printf("               |  ");
-            for(int j=0; j<myMap->cols; j++){
-                printf("%d ", myMap->map[i][j]);
-                if(myMap->map[i][j] / 10 == 0 && myMap->map[i][j] > -1){
-                    printf(" ");
-                }
-                if(myMap->map[i][j] == 1 && isPlayer == 0){
-                    isPlayer = 1;
-                }
-            }
-            printf("|");
-            if(isPlayer == 1){
-                printf(" <- Player is on this line");
-                isPlayer = 0;
-            }
-            printf("\n");
-        }
-        printf("               |                                      |\n");
-        printf("               \\______________________________________/\n");
-        return;
-    }
-
-    if (myMap->rank == 3){
-        printf("                _______________________________________________\n");
-        printf("               /                                               \\\n");
-        printf("               |                     MAP %d                     |\n", myMap->rank);
-        printf("               |                                               |\n");
-        printf("               +-----------------------------------------------+\n");
-        printf("               |                                               |\n");
-        for(int i=0; i<myMap->rows; i++){
-            printf("               |  ");
-            for(int j=0; j<myMap->cols; j++){
-                printf("%d ", myMap->map[i][j]);
-                if(myMap->map[i][j] / 10 == 0 && myMap->map[i][j] > -1){
-                    printf(" ");
-                }
-                if(myMap->map[i][j] == 1 && isPlayer == 0){
-                    isPlayer = 1;
-                }
-            }
-            printf("|");
-            if(isPlayer == 1){
-                printf(" <- Player is on this line");
-                isPlayer = 0;
-            }
-            printf("\n");
-        }
-        printf("               |                                               |\n");
-        printf("               \\_______________________________________________/\n");
-        return;
-    }
-}
-
 void initMapToZero(map *myMap)
 {
     assert(myMap);
@@ -426,13 +353,6 @@ void initMapToZero(map *myMap)
 void initMapSet(map **myMapSet)
 {
     assert(myMapSet);
-    int ROWS_MAP_1, ROWS_MAP_2, ROWS_MAP_3, COLS_MAP_1, COLS_MAP_2, COLS_MAP_3;
-    ROWS_MAP_1 = 8;
-    COLS_MAP_1 = 8;
-    ROWS_MAP_2 = 12;
-    COLS_MAP_2 = 12;
-    ROWS_MAP_3 = 15;
-    COLS_MAP_3 = 15;
 
     int NB_CASES_MAP_1, NB_CASES_MAP_2, NB_CASES_MAP_3;
     NB_CASES_MAP_1 = ROWS_MAP_1 * COLS_MAP_1;
@@ -459,7 +379,7 @@ void initMapSetFrame(map ***myPreviousMapSetFrames, map **myMapSet)
     assert(myPreviousMapSetFrames);
     assert(myMapSet);
     int nbMapSetCase = ((myMapSet[0]->rows) * (myMapSet[0]->cols))+ ((myMapSet[1]->rows) * (myMapSet[1]->cols))+ ((myMapSet[2]->rows) * (myMapSet[2]->cols));
-    for(int i=0; i<5; i++)
+    for(int i=0; i<8; i++)
     {
         myPreviousMapSetFrames[i] = malloc(3*sizeof(myMapSet) + nbMapSetCase*sizeof(int));
         initMapSet(myPreviousMapSetFrames[i]);
@@ -469,17 +389,6 @@ void initMapSetFrame(map ***myPreviousMapSetFrames, map **myMapSet)
             initMapToZero(myPreviousMapSetFrames[i][j]);
         }
     }
-
-    //PRINT MAPSET FRAMES
-    /*
-    for(int i=0; i<5; i++)
-    {
-        for(int j=0; j<3; j++)
-        {
-            printMap(myPreviousMapSetFrames[i][j]);
-        }
-    }
-    */
 }
 
 void copyMapSet(map **dest, map **src)
@@ -518,12 +427,4 @@ void setMapSetDifferences(map **newMapSet, map **diffMapSet)
     }
 }
 
-void printMapXInMapFrame(map ***myPreviousMapSetFrames)
-{
-    for(int i=0; i<5; i++)
-    {
-        printf("FRAME %d\n", i+1);
-        printMap(myPreviousMapSetFrames[i][0]);
-    }
-}
-
+#endif

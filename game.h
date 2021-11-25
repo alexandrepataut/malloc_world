@@ -1,10 +1,10 @@
+#ifndef GAME_H
+#define GAME_H
 #include "malloc_world.h"
 #include "map.h"
 #include "player.h"
+//#include "monster.h"
 
-#ifndef GAME_H
-#define GAME_H
-#endif
 
 // GAME CLASS CONTAINS THE FULL GAME MANAGING THANKS TO OTHER CLASSES (MAP, PLAYER, ...)
 // WE CAN OPERATE ON EVERY ASPECTS OF THE GAME RIGHT HERE
@@ -17,6 +17,8 @@ typedef struct game{
     map **lastMapSet;
     map ***previousDiffMapSet;
     int nbOfMap;
+    //monster **monsters;
+    int idLastMonster;
 }game;
 
 game *newGame();
@@ -48,31 +50,28 @@ void addWeapon(game *myGame, item **myInventory, int index);
 
 // FUNCTION FOR CREATING A NEW GAME
 game *newGame(){
-    int nbCaseMap1 = 8*8;
-    int nbCaseMap2 = 12*12;
-    int nbCaseMap3 = 15*15;
+    int nbCaseMap1 = ROWS_MAP_1 * COLS_MAP_1;
+    int nbCaseMap2 = ROWS_MAP_2 * COLS_MAP_2;
+    int nbCaseMap3 = ROWS_MAP_3 * COLS_MAP_3;
     int nbCaseMapset = nbCaseMap1 + nbCaseMap2 + nbCaseMap3;
+    int nbCaseMapSetFrame = 8*nbCaseMapset;
 
-    game *myGame = malloc(sizeof(myGame) + 2*sizeof(map **)+sizeof(map ***) + sizeof(int) +11*nbCaseMapset*sizeof(int));
-
+    game *myGame = malloc(sizeof(myGame) + sizeof(player *) + 10*sizeof(int) + 10*sizeof(map **)+sizeof(map ***) + 2*sizeof(int) +10*nbCaseMapset*sizeof(int)/* + 33*sizeof(monster *)+33*10*sizeof(int)*/);
+    //myGame->monsters = malloc(33*sizeof(monster *)+33*10*sizeof(int));
+    myGame->idLastMonster = 0;
     myGame->mapSet = malloc(3*sizeof(map **) + nbCaseMapset*sizeof(int));
-    initMapSet(myGame->mapSet);
+    
     myGame->mapSet[0] = initMap(1);
     myGame->mapSet[1] = initMap(2);
     myGame->mapSet[2] = initMap(3);
-    /*
-    myGame->mapSet = malloc(3*sizeof(map) + nbCaseMapset * sizeof(int));
     assert(myGame->mapSet);
     // BASICALLY WE MAKE :
     //      MAP 1 : 8 ROWS AND COLS, RANK 1
     //      MAP 2 : 12"                  "2
     //      MAP 3 : 15"                  "3
-    myGame->mapSet[0]->map = malloc(sizeof(map *)+nbCaseMap1*sizeof(int));
-    */
 
 
     
-    int nbCaseMapSetFrame = 5*nbCaseMapset;
     
     myGame->lastMapSet = malloc(3*sizeof(map) + nbCaseMapset * sizeof(int));
     myGame->lastMapSet[0] = initMap(1);
@@ -84,6 +83,7 @@ game *newGame(){
     }
     // PUT THE PLAYER ON THE FIRST MAP ON A RAND POSITION
     putPlayer(myGame->mapSet[0]);
+    myGame->p = malloc(sizeof(player *) + 10*sizeof(int));
     myGame->p = newPlayer();
 
     // UPDATE PLAYER STRUCT ATTRIBUTES
@@ -92,13 +92,10 @@ game *newGame(){
     myGame->p->currentMap = myGame->mapSet[0]->rank;
     //copyMapSet(myGame->lastMapSet, myGame->mapSet);
 
-    myGame->previousDiffMapSet = malloc(5*(sizeof(myGame->mapSet)+ nbCaseMapSetFrame*sizeof(int)));
+    myGame->previousDiffMapSet = malloc(8*(sizeof(myGame->mapSet) + nbCaseMapSetFrame*sizeof(int)));
     assert(myGame->previousDiffMapSet);
     initMapSetFrame(myGame->previousDiffMapSet, myGame->mapSet);
-    //setAllMapSetAsCurrentMapSet(myGame->previousDiffMapSet, myGame->mapSet);
-    printf("POSX : %d POSY : %d\n", myGame->p->posX, myGame->p->posY);
     myGame->nbOfMap = 3;
-    printf("GAME CREATED\n");
     
     return myGame;
 }
@@ -111,6 +108,14 @@ void closeGame(game *myGame){
     free(myGame);
 }
 
+void changeActiveWeapon(game *myGame, int newActiveWeapon)
+{  
+    if(newActiveWeapon < 0 || newActiveWeapon > 2)
+        return;
+    myGame->p->activeWeapon = newActiveWeapon;
+    return;
+}
+
 void resetPlayerPos(game *myGame)
 {
     putPlayer(myGame->mapSet[myGame->p->currentMap-1]);
@@ -120,16 +125,171 @@ void resetPlayerPos(game *myGame)
     myGame->p->posY = getYPlayerPos(myGame->mapSet[myGame->p->currentMap-1]);
 }
 
+void printMap(player *p, map *myMap){
+    int line = myMap->rank == 1 ? COLS_MAP_1 : (myMap->rank == 2 ? COLS_MAP_2 : COLS_MAP_3);
+    line = line*3+2;
+    int titleLineSpaces = line-5;
+    int titleSpacesBefore = titleLineSpaces / 2; 
+    int titleSpacesAfter =  titleLineSpaces % 2 == 1 ? titleSpacesBefore+1 : titleSpacesBefore;
+
+
+    printf("               ▛");
+    for(int i=0; i<line; i++)
+    {
+        printf("▀");
+    }
+    printf("▜\n");
+
+        printf("               ▌");
+    for(int i=0; i<line; i++)
+    {
+        printf(" ");
+    }
+    printf("▐\n");
+
+    printf("               ▌");
+    for(int i=0; i<titleSpacesBefore; i++)
+    {
+        printf(" ");
+    }
+    printf("MAP %d", myMap->rank);
+    for(int i=0; i<titleSpacesAfter; i++)
+    {
+        printf(" ");
+    }
+    printf("▐\n");
+
+    printf("               ▌");
+    for(int i=0; i<line; i++)
+    {
+        printf(" ");
+    }
+    printf("▐\n");
+
+
+    printf("               ▙");
+    for(int i=0; i<line; i++)
+    {
+        printf("▄");
+    }
+    printf("▟\n");
+
+    printf("               ▌");
+    for(int i=0; i<line; i++)
+    {
+        printf(" ");
+    }
+    printf("▐\n");
+
+    int isPlayer = 0;
+
+    for(int i=0; i<myMap->rows; i++){
+                printf("               ▌  ");
+                for(int j=0; j<myMap->cols; j++){
+                    switch (findCaseType(myMap->map[i][j]))
+                    {
+                    case _IS_RESOURCE_:
+                        if(myMap->map[i][j]==_PLANT_1_ || myMap->map[i][j]==_PLANT_2_ || myMap->map[i][j]==_PLANT_3_)
+                            printf("❀  ");
+                        else if(myMap->map[i][j]==_ROC_1_ || myMap->map[i][j]==_ROC_2_ || myMap->map[i][j]==_ROC_3_)
+                            printf("ⓡ  ");
+                        else
+                            printf("ⓦ  ");
+                        break;
+
+                    case _IS_TP_CASE_:
+                        if(p->currentMap == 1)
+                            printf("⚁  ");
+                        if(p->currentMap == 3)
+                            printf("⚁  ");
+                        if(p->currentMap == 2)
+                        {
+                            if(myMap->map[i][j]==_TP_CASE_2_TO_1)
+                                printf("⚀  ");
+                            else
+                                printf("⚂  ");
+                        }
+                        break;
+                    
+                    case _IS_MONSTER_CASE_:
+                        printf("ⓜ  ");
+                        break;
+                    
+                    case _PLAYER_:
+                        if(p->direction == _NORTH_)
+                            printf("⮝  ");			
+                        else if(p->direction == _SOUTH_)
+                            printf("⮟  ");
+                        else if(p->direction == _EAST_)
+                            printf("⮞  ");
+                        else
+                            printf("⮜  ");
+                        break;
+                    
+                    case _INFRANCHISSABLE_:
+                        printf("■  ");
+                        break;
+                    case _FREE_CASE_:
+                        printf("⬚  ");
+                        break;
+                    case _PNJ_CASE_:
+                        printf("⚒  ");
+                        break;
+                    default:
+                        printf("¤  ");
+                        break;
+                    }
+                    if(myMap->map[i][j] == 1 && isPlayer == 0)
+                    {
+                        isPlayer = 1;
+                    }
+                }
+                printf("▐");
+                if(isPlayer == 1)
+                {
+                    printf(" ☜ ");
+                    isPlayer = 0;
+                }
+                printf("\n");
+    }    
+    printf("               ▙");
+    for(int i=0; i<line; i++)
+    {
+        printf("▄");
+    }
+    printf("▟\n");
+}
+
 void printPlayer(game *myGame){
-    printf("                 ________________________\n");
-    printf("                /                        \\\n");
-    printf("                |      PLAYER STATS      |\n");
-    printf("                |                        |\n");
-    printf("                +------------------------+\n");
-    printf("    \t\t| HP : %d/%d\n", myGame->p->currentHp, myGame->p->hp);
+    printf("                 ____________________________\n");
+    printf("                /                            \\\n");
+    printf("                |        PLAYER STATS        |\n");
+    printf("                |                            |\n");
+    printf("                +----------------------------+\n");
+    printf("    \t\t| HP           : %d/%d\n", myGame->p->currentHp, myGame->p->hp);
     printf("    \t\t| PLAYER LEVEL : %d\n", myGame->p->level);
-    printf("    \t\t| POSITION :  [%d, %d]\n", myGame->p->posX, myGame->p->posY);
-    printf("    \t\t| DIRECTION :  ");
+    printf("    \t\t| EXPERIENCE   : %d/%d XP\n", myGame->p->currentXp, myGame->p->nextLevel);
+    printf("    \t\t| WEAPONS :\n");
+    for(int i=0; i<3; i++)
+    {
+        if(myGame->p->activeWeapon == i)
+        {
+            printf("    \t\t|     # %d ", i);
+        }
+        else
+        {
+            printf("    \t\t|       %d ", i);
+        }
+
+        printResource(myGame->p->weaponSet[i]->value);
+        printf("\n");
+        if(myGame->p->weaponSet[i]->value != _ESPACE_LIBRE)
+            printf("    \t\t|         DUR : %d   DMG : %d\n", myGame->p->weaponSet[i]->durability, myGame->p->weaponSet[i]->damage);
+        else
+            printf("    \t\t|\n");
+    }
+    printf("    \t\t| POSITION     : [%d, %d]\n", myGame->p->posX, myGame->p->posY);
+    printf("    \t\t| DIRECTION    : ");
     switch (myGame->p->direction)
     {
     case _NORTH_:
@@ -148,8 +308,8 @@ void printPlayer(game *myGame){
     default:
         break;
     }
-    printf("    \t\t| CURRENT MAP : %d\n", myGame->p->currentMap);
-    printf("    \t\t| TARGET : ");
+    printf("    \t\t| CURRENT MAP  : %d\n", myGame->p->currentMap);
+    printf("    \t\t| TARGET       : ");
     int targetXPos = findTargetXPos(myGame);
     int targetYPos = findTargetYPos(myGame);
     if(targetXPos >= 0 && targetXPos < myGame->mapSet[myGame->p->currentMap-1]->rows && targetYPos >= 0 && targetYPos < myGame->mapSet[myGame->p->currentMap-1]->cols){
@@ -160,7 +320,7 @@ void printPlayer(game *myGame){
             //printFarming(myGame->mapSet[myGame->p->currentMap - 1]->map[myGame->p->posX][myGame->p->posY]);
             break;
         case _IS_MONSTER_CASE_:
-            printf("Monster");
+            printf("Monster (%d)", findTargetValueCase(myGame, findTargetXPos(myGame), findTargetYPos(myGame)));
             break;
         case _IS_TP_CASE_:
             printf("Make teleportation ?");
@@ -168,12 +328,15 @@ void printPlayer(game *myGame){
         case _PNJ_CASE_:
             printf("Talk to Pr. Malloc ?");
             break;
+        case _INFRANCHISSABLE_:
+            printf("Wall");
+            break;
         default:
             break;
         }
     }
     printf("\n");
-    printf("                \\_______________________/\n");
+    printf("                \\___________________________/\n");
 }
 // PRINTING FUNCTION FOR THE CURRENT GAME MAP AND THE PLAYER STATS
 void printAll(game *myGame){
@@ -181,7 +344,7 @@ void printAll(game *myGame){
     assert(myGame->p);
     assert(myGame->mapSet[myGame->p->currentMap-1]);
     printf("\n\n");
-    printMap(myGame->mapSet[myGame->p->currentMap-1]);
+    printMap(myGame->p, myGame->mapSet[myGame->p->currentMap-1]);
     printf("\n\n");
     printPlayer(myGame);
     printf("\n\n");
@@ -655,7 +818,6 @@ void makeAction(game *myGame){
         return;
     
     case _IS_TP_CASE_ :
-    printf("###\n#\nMAKING TP\n###\n");
         makeTp(myGame, caseValue);
         copyMapSet(myGame->lastMapSet, myGame->mapSet);
         return;
@@ -747,12 +909,12 @@ void applyMapSetsDiff(game *myGame)
         {
             for(int k=0; k<myGame->mapSet[i]->cols; k++)
             {
-                if(myGame->previousDiffMapSet[4][i]->map[j][k] != 0)
+                if(myGame->previousDiffMapSet[7][i]->map[j][k] != 0)
                 {
                     if(myGame->mapSet[i]->map[j][k] != _PLAYER_)
-                        myGame->mapSet[i]->map[j][k] = myGame->previousDiffMapSet[4][i]->map[j][k];
+                        myGame->mapSet[i]->map[j][k] = myGame->previousDiffMapSet[7][i]->map[j][k];
                     else
-                        myGame->previousDiffMapSet[3][i]->map[j][k] = myGame->previousDiffMapSet[4][i]->map[j][k];
+                        myGame->previousDiffMapSet[6][i]->map[j][k] = myGame->previousDiffMapSet[7][i]->map[j][k];
                 }
             }
         }
@@ -781,7 +943,7 @@ void updateDiffMapSetFrames(game *myGame)
     myDiffMapSet = getDiffMapSets(myGame);
 
     
-    for(int i=4; i>0; i--){
+    for(int i=7; i>0; i--){
         copyMapSet(myGame->previousDiffMapSet[i], myGame->previousDiffMapSet[i-1]);
     }
     copyMapSet(myGame->previousDiffMapSet[0], myDiffMapSet);
@@ -1199,3 +1361,5 @@ void openBag(game *myGame)
             return;
         }
 }
+
+#endif

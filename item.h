@@ -80,35 +80,6 @@ void freeInventory(item **myInventory){
     free(myInventory);
 }
 
-void printItem(item *itm){
-    assert(itm);
-    printf("%d\t", itm->quantity);
-    printResource(itm->value);
-    printf("\n");
-    switch (itm->type)
-    {
-    case 'w':
-        printf("ARME\n\tDEGATS : %d\n\tDURABILITE : %d", itm->damage, itm->durability);
-        break;
-    case 't':
-        printf("OUTIL\n\tDURABILITE : %d", itm->durability);
-        break;
-    case 's':
-        printf("ARMURE\n\tRESISTANCE : %d%% REDUCTION DES DEGATS", itm->dmgResist);
-        break;
-    case 'h':
-        printf("HP RESTAURES : %dHP", itm->healPt);
-        break;
-    case 'r':
-        printf("RESSOURCE\n\tQUANTITE MAX : %d", itm->maxQuant);
-        break;
-    
-    default:
-        break;
-    }
-    printf("\n");
-}
-
 int itemAlreadyPresent(item **myInventory, int value){
     assert(myInventory);
     for(int i=0; i<10; i++){
@@ -128,7 +99,7 @@ void addItem(item **myInventory, int value){
             assert(myInventory[i]);
             if(myInventory[i]->type == '0'){
                 free(myInventory[i]);
-                myInventory[i] = malloc(sizeof(item));
+                myInventory[i] = malloc(sizeof(item *));
                 assert(myInventory[i]);
                 myInventory[i] = createItem(value, 1);
                 assert(myInventory[i]);
@@ -156,20 +127,6 @@ void delItem(item** myInventory, int index){
         myInventory[index] = createItem(_ESPACE_LIBRE, 0);
         assert(myInventory[index]);
         return;
-    }
-}
-
-void reduceQuantity(item **myInventory, int value, int quantity){
-    assert(myInventory);
-    int index = itemAlreadyPresent(myInventory, value);
-    if(index > -1){
-        assert(myInventory[index]);
-        if(myInventory[index]->quantity >= quantity){
-            myInventory[index]->quantity -= quantity;
-        }
-        if(myInventory[index]->quantity == 0){
-            delItem(myInventory, index);
-        }
     }
 }
 
@@ -202,6 +159,21 @@ void delWeapon(item **myWeaponSet, int index){
     return;
 }
 
+int findNextDurability(item *tool, int resourceValue){
+    if(resourceValue == _PIERRE_ || resourceValue == _SAPIN_ || resourceValue == _HERBE_){
+        return (tool->durability - ( (tool->maxDurability) / 10));
+    }
+
+    if(resourceValue == _FER_ || resourceValue == _HETRE_ || resourceValue == _LAVANDE_){
+        return (tool->durability - ( (tool->maxDurability) /10) * 2);
+    }
+
+    if(resourceValue == _DIAMANT_ || resourceValue == _CHENE_ || resourceValue == _CHANVRE_){
+        return (tool->durability - ( (tool->maxDurability) / 10) * 4);
+    }
+    return -1;
+}
+
 int indexToolNeeded(item **myInventory, int resourceValue){
     assert(myInventory);
     int index = -1;
@@ -209,35 +181,35 @@ int indexToolNeeded(item **myInventory, int resourceValue){
     {
     case _HERBE_:
         index = itemAlreadyPresent(myInventory, _SERPE_EN_BOIS_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _SERPE_EN_PIERRE_) : index;
-        index = index < 0 ? itemAlreadyPresent(myInventory, _SERPE_EN_FER_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _SERPE_EN_PIERRE_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _SERPE_EN_FER_) : index;
         return index;
 
     case _PIERRE_:
         index = itemAlreadyPresent(myInventory, _PIOCHE_EN_BOIS_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _PIOCHE_EN_PIERRE_) : index;
-        index = index < 0 ? itemAlreadyPresent(myInventory, _PIOCHE_EN_FER_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _PIOCHE_EN_PIERRE_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _PIOCHE_EN_FER_) : index;
         return index;
 
     case _SAPIN_:
         index = itemAlreadyPresent(myInventory, _HACHE_EN_BOIS_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _HACHE_EN_PIERRE_) : index;
-        index = index < 0 ? itemAlreadyPresent(myInventory, _HACHE_EN_FER_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _HACHE_EN_PIERRE_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _HACHE_EN_FER_) : index;
         return index;
 
     case _LAVANDE_:
         index = itemAlreadyPresent(myInventory, _SERPE_EN_PIERRE_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _SERPE_EN_FER_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _SERPE_EN_FER_) : index;
         return index;
 
     case _FER_:
         index = itemAlreadyPresent(myInventory, _PIOCHE_EN_PIERRE_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _PIOCHE_EN_FER_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _PIOCHE_EN_FER_) : index;
         return index;
 
     case _HETRE_:
         index = itemAlreadyPresent(myInventory, _HACHE_EN_PIERRE_);
-        index = index < 0 ? itemAlreadyPresent(myInventory, _HACHE_EN_FER_) : index;
+        index = (index < 0) || (findNextDurability(myInventory[index], resourceValue) < 1) ? itemAlreadyPresent(myInventory, _HACHE_EN_FER_) : index;
         return index;
 
     case _CHANVRE_:
@@ -257,21 +229,6 @@ int indexToolNeeded(item **myInventory, int resourceValue){
         return index;
     }
     return index;
-}
-
-int findNextDurability(item *tool, int resourceValue){
-    if(resourceValue == _PIERRE_ || resourceValue == _SAPIN_ || resourceValue == _HERBE_){
-        return (tool->durability - ( (tool->maxDurability) / 10));
-    }
-
-    if(resourceValue == _FER_ || resourceValue == _HETRE_ || resourceValue == _LAVANDE_){
-        return (tool->durability - ( (tool->maxDurability) /10) * 2);
-    }
-
-    if(resourceValue == _DIAMANT_ || resourceValue == _CHENE_ || resourceValue == _CHANVRE_){
-        return (tool->durability - ( (tool->maxDurability) / 10) * 4);
-    }
-    return -1;
 }
 
 void repairAllDurability(item **myInventory)
@@ -476,7 +433,7 @@ int isThisRecipePossible(int myCraftValue, int myPlantQty, int myRocQty, int myW
     if(ingredientsNeeded[_WOOD_INDEX_][_QUANTITY_] > myWoodQty)
         res = 0;
 
-    free(ingredientsNeeded); // ???
+    free(ingredientsNeeded); 
     
     return res;
 }

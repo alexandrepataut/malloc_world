@@ -28,6 +28,10 @@ void printCommands(){
     printf("         | |  |    | ACT        : Press 'a' |  |  | |\n");
     printf("         | |  |    +------------------------+  |  | |\n");
     printf("         | |  |                                |  | |\n");
+    printf("         | |  |  CHANGE WEAPON--------------+  |  | |\n");
+    printf("         | |  |    |   Press '0', '1', '2'  |  |  | |\n");
+    printf("         | |  |    +------------------------+  |  | |\n");
+    printf("         | |  |                                |  | |\n");
     printf("         | |  |    Press 'Enter' to confirm    |  | |\n");
     printf("         | |  |                                |  | |\n");
     printf("         | |  +--------------------------------+  | |\n");
@@ -40,7 +44,8 @@ void printCommands(){
 void takeInput(game *myGame){
     // CREATE A CHAR TO RECEIVE THE COMMAND INPUT
     char input[50];
-    printf("What is your entry ?\n\n\tPress 'h' to see commands instructions, then press 'Enter'\n");
+    printf("\n\tPress 'h' to see commands, then press 'Enter'\n");
+    printf("\n\tWhat is your entry ?\n");
     scanf("%s", input);
 
     // PRINT INSTRUCTION ON COMMAND LINE
@@ -87,6 +92,10 @@ void takeInput(game *myGame){
         openBag(myGame);
         return;
     }
+    if (strcmp(input, "0")==0 || strcmp(input, "1")==0 || strcmp(input, "2")==0) {
+        changeActiveWeapon(myGame, atoi(input));
+        return;
+    }
     printf("    +-----------------------------------------------------------------------------+\n");
     printf("    |                                                                             |\n");
     printf("    | %s : Invalid input (Type 'h' and press 'Enter' to see commands instructions) |\n", input);
@@ -97,19 +106,12 @@ void takeInput(game *myGame){
 
 int main() {
     game *myGame = newGame();
-    addItem(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
-    addItem(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
-    addItem(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
-    int index = itemAlreadyPresent(myGame->p->inventory, _MARTEAU_EN_DIAMANT_);
-    myGame->p->inventory[index]->durability -= 1;
-    // LAUNCH THE GAME WITH A LOOP
+
     myGame->p->level = 7;
     int counter = 0;
     while(counter < 3000){
         printAll(myGame);
         takeInput(myGame);
-        
-
         counter++;
     }
     
