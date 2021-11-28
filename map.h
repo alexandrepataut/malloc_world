@@ -24,17 +24,36 @@ typedef struct map
     int lvlRequired;
 }map;
 
-void setMapSetDifferences(map **dest, map **src);
+int getXPlayerPos(map *myMap);
+int getYPlayerPos(map *myMap);
+void putTrees(map *myMap);
+void putWalls(map *myMap);
+void putMonsters(map *myMap);
+void putPlants(map *myMap);
+int getNbTpCases(map *myMap);
+void putTpCases(map *myMap);
+void putRocs(map *myMap);
+void putPnj(map *myMap);
+void putPlayer(map *myMap);
+void putAll(map *myMap);
+map *initMap(int rank);
+void initMapToZero(map *myMap);
+void initMapSetFrame(map ***myPreviousMapSetFrames, map **myMapSet);
+void copyMapSet(map **dest, map **src);
+void setMapSetDifferences(map **newMapSet, map **diffMapSet);
 
-void freeMap(map *myMap){
+void freeMap(map *myMap)
+{
     assert(myMap);
     free(myMap->map);
     free(myMap);
 }
 
-void freeMapSet(map **myMapSet, int nbOfMaps){
+void freeMapSet(map **myMapSet, int nbOfMaps)
+{
     assert(myMapSet);
-    for(int i=0; i<nbOfMaps; i++){
+    for(int i=0; i<nbOfMaps; i++)
+    {
         assert(myMapSet[i]);
         freeMap(myMapSet[i]);
     }
@@ -42,20 +61,28 @@ void freeMapSet(map **myMapSet, int nbOfMaps){
 }
 
 // GETTERS FOR PLAYER POSITION
-int getXPlayerPos(map *myMap){
-    for(int i = 0; i < myMap->rows; i++){
-        for(int j = 0; j < myMap->cols; j++){
-            if(myMap->map[i][j] == 1) {
+int getXPlayerPos(map *myMap)
+{
+    for(int i = 0; i < myMap->rows; i++)
+    {
+        for(int j = 0; j < myMap->cols; j++)
+        {
+            if(myMap->map[i][j] == 1) 
+            {
                 return i;
             }
         }
     }
     return 0;
 }
-int getYPlayerPos(map *myMap){
-    for(int i = 0; i < myMap->rows; i++){
-        for(int j = 0; j < myMap->cols; j++){
-            if(myMap->map[i][j] == 1) {
+int getYPlayerPos(map *myMap)
+{
+    for(int i = 0; i < myMap->rows; i++)
+    {
+        for(int j = 0; j < myMap->cols; j++)
+        {
+            if(myMap->map[i][j] == 1) 
+            {
                 return j;
             }
         }
@@ -63,20 +90,21 @@ int getYPlayerPos(map *myMap){
     return 0;
 }
 
-void putTrees(map *myMap){
+void putTrees(map *myMap)
+{
     int nbTrees, x, y, i, val;
     // NUMBER OF TREES DEPENDS ON THE RANK OF THE MAP
     nbTrees = myMap->nbTrees;
     val = myMap->rank == 1 ? _BOIS_1_ : (myMap->rank == 2 ? _BOIS_2_ : _BOIS_3_);
     i = 0;
 
-    while(i<nbTrees){
+    while(i<nbTrees)
+    {
         // RANDOM POSITION ON MAP
         x = rand()%(myMap->rows);
         y = rand()%(myMap->cols);
-        
-
-        if(myMap->map[x][y]==0){
+        if(myMap->map[x][y]==0)
+        {
             // PUT TREE VALUE ON THE [X, Y] RANDOM POSITION GENERATED
             // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = val;
@@ -92,13 +120,13 @@ void putWalls(map *myMap)
     nbWalls = (myMap->rows+myMap->cols)/2;
     i = 0;
 
-    while(i<nbWalls){
+    while(i<nbWalls)
+    {
         // RANDOM POSITION ON MAP
         x = rand()%(myMap->rows);
         y = rand()%(myMap->cols);
-        
-
-        if(myMap->map[x][y]== _FREE_CASE_){
+        if(myMap->map[x][y]== _FREE_CASE_)
+        {
             // PUT WALL VALUE ON THE [X, Y] RANDOM POSITION GENERATED
             // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = _INFRANCHISSABLE_;
@@ -107,7 +135,8 @@ void putWalls(map *myMap)
     }
 }
 
-void putMonsters(map *myMap){
+void putMonsters(map *myMap)
+{
     int nbMonsters, x, y, i, min_val, max_val, randMonster;
     // NUMBER OF MONSTERS DEPENDS ON THE RANK OF THE MAP
     nbMonsters = myMap->nbMonsters;
@@ -117,7 +146,8 @@ void putMonsters(map *myMap){
     min_val = myMap->rank == 1 ? 12 : (myMap->rank == 2 ? 45 : 70);
     max_val = myMap->rank == 1 ? 44 : (myMap->rank == 2 ? 69 : 98);
 
-    while(i<nbMonsters){
+    while(i<nbMonsters)
+    {
         // RANDOM POSITION ON MAP
         x = rand()%(myMap->rows);
         y = rand()%(myMap->cols);
@@ -125,7 +155,8 @@ void putMonsters(map *myMap){
         // GENERATE A RANDOM MONSTER VALUE DEPENDING ON PREVIOUS CALCULATED VALUES
         randMonster = (rand()%(max_val - min_val +1)) + min_val;
 
-        if(myMap->map[x][y] == 0){
+        if(myMap->map[x][y] == 0)
+        {
             // PUT MONSTER VALUE ON THE [X, Y] RANDOM POSITION GENERATED
             // ONLY IF THE MAP[X, Y] CASE IS FREE
             myMap->map[x][y] = randMonster;
@@ -134,7 +165,8 @@ void putMonsters(map *myMap){
     }
 }
 
-void putPlants(map *myMap){
+void putPlants(map *myMap)
+{
     int nbPlants, x, y, i, val;
     // NUMBER OF PLANTS DEPENDS ON THE RANK OF THE MAP
     nbPlants = myMap->nbPlants;
@@ -156,7 +188,8 @@ void putPlants(map *myMap){
     }
 }
 
-int getNbTpCases(map *myMap){
+int getNbTpCases(map *myMap)
+{
     int nbTpCases = 0;
     if(myMap->rank == 1){
         for(int i=0; i<myMap->rows; i++){
@@ -188,7 +221,8 @@ int getNbTpCases(map *myMap){
     return nbTpCases;
 }
 
-void putTpCases(map *myMap){
+void putTpCases(map *myMap)
+{
     int x, y;
 
     if(myMap->rank == 1){
@@ -229,7 +263,8 @@ void putTpCases(map *myMap){
     }
 }
 
-void putRocs(map *myMap){
+void putRocs(map *myMap)
+{
     int nbRocs, x, y, i, val;
     // NUMBER OF ROCS DEPENDS ON THE RANK OF THE MAP
     nbRocs = myMap->nbPlants;
@@ -251,7 +286,8 @@ void putRocs(map *myMap){
     }
 }
 
-void putPnj(map *myMap){
+void putPnj(map *myMap)
+{
     int i, x, y;
     i = 0;
 
@@ -267,7 +303,8 @@ void putPnj(map *myMap){
     }
 }
 
-void putPlayer(map *myMap){
+void putPlayer(map *myMap)
+{
     int i, x, y;
     i = 0;
 
@@ -283,7 +320,8 @@ void putPlayer(map *myMap){
     }
 }
 
-void putAll(map *myMap){
+void putAll(map *myMap)
+{
     putWalls(myMap);
     putTrees(myMap);
     putPlants(myMap);
@@ -293,7 +331,8 @@ void putAll(map *myMap){
     putPnj(myMap);
 }
 
-map *initMap(int rank){
+map *initMap(int rank)
+{
     // CREATING MAP TAB OF TABS ALLOCATING INT TAB FIRSTLY ...
     int nbCase = rank == 1 ? ROWS_MAP_1*COLS_MAP_1 : (rank == 2 ? ROWS_MAP_2*COLS_MAP_2 : ROWS_MAP_3*COLS_MAP_3);
     
@@ -306,7 +345,7 @@ map *initMap(int rank){
     myMap->rank = rank;
     // NUMBER OF EACH RESOURCE (TREES, PLANTS, MONSTERS, ROCS) DEPENDS ON THE RANK OF THE MAP
     myMap->nbTrees = (myMap->rows+myMap->cols)/2;
-    myMap->nbMonsters = (myMap->rows+myMap->cols)/2/2 ;
+    myMap->nbMonsters = rank == 1 ? 5 : (rank == 2 ? 8 : 10);
     myMap->nbRocs = (myMap->rows+myMap->cols)/2;
     myMap->nbPlants = (myMap->rows+myMap->cols)/2;
     // TREE VALUE ON MAP DEPENDS ON THE RANK OF THE MAP [MAP 1 : 5] [MAP 2 : 8] [MAP 3 : 11]

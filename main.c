@@ -2,7 +2,8 @@
 #include "game.h"
 
 // PRINTING FUNCTION FOR COMMANDS
-void printCommands(){
+void printCommands()
+{
     printf("          __________________________________________\n");
     printf("         /                                          \\\n");
     printf("         | +---------------COMMANDS---------------+ |\n");
@@ -41,7 +42,8 @@ void printCommands(){
     printf("\n\n");
 }
 
-void takeInput(game *myGame){
+void takeInput(game *myGame)
+{
     // CREATE A CHAR TO RECEIVE THE COMMAND INPUT
     char input[50];
     printf("\n\tPress 'h' to see commands, then press 'Enter'\n");
@@ -51,48 +53,59 @@ void takeInput(game *myGame){
     // PRINT INSTRUCTION ON COMMAND LINE
 
     // MAKE MOVE DEPENDING ON THE INPUT
-    if (strcmp(input, "z")==0 || strcmp(input, "Z")==0) {
+    if (strcmp(input, "z")==0 || strcmp(input, "Z")==0) 
+    {
         moveUp(myGame);
         return;
     }
-    if (strcmp(input, "s")==0 || strcmp(input, "S")==0) {
+    if (strcmp(input, "s")==0 || strcmp(input, "S")==0) 
+    {
         moveDown(myGame);
         return;
     }
-    if (strcmp(input, "q")==0 || strcmp(input, "Q")==0) {
+    if (strcmp(input, "q")==0 || strcmp(input, "Q")==0) 
+    {
         moveLeft(myGame);
         return;
     }
-    if (strcmp(input, "d")==0 || strcmp(input, "D")==0) {
+    if (strcmp(input, "d")==0 || strcmp(input, "D")==0) 
+    {
         moveRight(myGame);
         return;
     }
-    if (strcmp(input, "i")==0 || strcmp(input, "I")==0) {
+    if (strcmp(input, "i")==0 || strcmp(input, "I")==0) 
+    {
         printInventory(myGame->p);
         return;
     }
-    if (strcmp(input, "h")==0 || strcmp(input, "H")==0) {
+    if (strcmp(input, "h")==0 || strcmp(input, "H")==0) 
+    {
         printCommands();
         return;
     }
-    if (strcmp(input, "w")==0 || strcmp(input, "W")==0) {
+    if (strcmp(input, "w")==0 || strcmp(input, "W")==0) 
+    {
         printWeaponSet(myGame->p);
         return;
     }
-    if (strcmp(input, "a")==0 || strcmp(input, "A")==0) {
+    if (strcmp(input, "a")==0 || strcmp(input, "A")==0) 
+    {
         makeAction(myGame);
         updateDiffMapSetFrames(myGame);
         return;
     }
-    if (strcmp(input, "p")==0) {
+    if (strcmp(input, "p")==0) 
+    {
         resetPlayerPos(myGame);
         return;
     }
-    if (strcmp(input, "o")==0) {
+    if (strcmp(input, "o")==0) 
+    {
         openBag(myGame);
         return;
     }
-    if (strcmp(input, "0")==0 || strcmp(input, "1")==0 || strcmp(input, "2")==0) {
+    if (strcmp(input, "0")==0 || strcmp(input, "1")==0 || strcmp(input, "2")==0) 
+    {
         changeActiveWeapon(myGame, atoi(input));
         return;
     }
@@ -104,10 +117,11 @@ void takeInput(game *myGame){
     return;
 }
 
-int main() {
+int main() 
+{
     game *myGame = newGame();
 
-    myGame->p->level = 7;
+    myGame->p->level = 1;
     int counter = 0;
     while(counter < 3000){
         printAll(myGame);

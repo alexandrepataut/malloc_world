@@ -3,7 +3,7 @@
 #include "malloc_world.h"
 #include "map.h"
 #include "player.h"
-//#include "monster.h"
+#include "monster.h"
 
 
 // GAME CLASS CONTAINS THE FULL GAME MANAGING THANKS TO OTHER CLASSES (MAP, PLAYER, ...)
@@ -17,12 +17,13 @@ typedef struct game{
     map **lastMapSet;
     map ***previousDiffMapSet;
     int nbOfMap;
-    //monster **monsters;
+    monster **monsters;
     int idLastMonster;
 }game;
 
 game *newGame();
 void closeGame(game *myGame);
+void changeActiveWeapon(game *myGame, int newActiveWeapon);
 void resetPlayerPos(game *myGame);
 void printPlayer(game *myGame);
 void printAll(game *myGame);
@@ -43,21 +44,30 @@ void applyMapSetsDiff(game *myGame);
 void updateDiffMapSetFrames(game *myGame);
 void openBag(game *myGame);
 void addWeapon(game *myGame, item **myInventory, int index);
+void printFight(player *p, monster *m);
+void attack(player *p, monster *m);
+void consumePotion(player *p);
+void changeWeapon(player *p);
+int escape();
+int fighting(game *myGame, int idMonster);
+void monsterAttacks(player *p, monster *m);
+void fight(game *myGame, int posX, int posY, int caseValue);
 
 
 
 
 
 // FUNCTION FOR CREATING A NEW GAME
-game *newGame(){
+game *newGame()
+{
     int nbCaseMap1 = ROWS_MAP_1 * COLS_MAP_1;
     int nbCaseMap2 = ROWS_MAP_2 * COLS_MAP_2;
     int nbCaseMap3 = ROWS_MAP_3 * COLS_MAP_3;
     int nbCaseMapset = nbCaseMap1 + nbCaseMap2 + nbCaseMap3;
     int nbCaseMapSetFrame = 8*nbCaseMapset;
 
-    game *myGame = malloc(sizeof(myGame) + sizeof(player *) + 10*sizeof(int) + 10*sizeof(map **)+sizeof(map ***) + 2*sizeof(int) +10*nbCaseMapset*sizeof(int)/* + 33*sizeof(monster *)+33*10*sizeof(int)*/);
-    //myGame->monsters = malloc(33*sizeof(monster *)+33*10*sizeof(int));
+    game *myGame = malloc(sizeof(myGame) + sizeof(player *) + 10*sizeof(int) + 10*sizeof(map **)+sizeof(map ***) + 2*sizeof(int) +10*nbCaseMapset*sizeof(int) + 23*sizeof(monster *) + 23*11*sizeof(int));
+    myGame->monsters = malloc(23*sizeof(monster *)+23*11*sizeof(int));
     myGame->idLastMonster = 0;
     myGame->mapSet = malloc(3*sizeof(map **) + nbCaseMapset*sizeof(int));
     
@@ -100,7 +110,8 @@ game *newGame(){
     return myGame;
 }
 
-void closeGame(game *myGame){
+void closeGame(game *myGame)
+{
     assert(myGame);
     assert(myGame->mapSet);
     freeMapSet(myGame->mapSet, 4);
@@ -125,7 +136,8 @@ void resetPlayerPos(game *myGame)
     myGame->p->posY = getYPlayerPos(myGame->mapSet[myGame->p->currentMap-1]);
 }
 
-void printMap(player *p, map *myMap){
+void printMap(player *p, map *myMap)
+{
     int line = myMap->rank == 1 ? COLS_MAP_1 : (myMap->rank == 2 ? COLS_MAP_2 : COLS_MAP_3);
     line = line*3+2;
     int titleLineSpaces = line-5;
@@ -260,36 +272,38 @@ void printMap(player *p, map *myMap){
     printf("▟\n");
 }
 
-void printPlayer(game *myGame){
-    printf("                 ____________________________\n");
-    printf("                /                            \\\n");
-    printf("                |        PLAYER STATS        |\n");
-    printf("                |                            |\n");
-    printf("                +----------------------------+\n");
-    printf("    \t\t| HP           : %d/%d\n", myGame->p->currentHp, myGame->p->hp);
-    printf("    \t\t| PLAYER LEVEL : %d\n", myGame->p->level);
-    printf("    \t\t| EXPERIENCE   : %d/%d XP\n", myGame->p->currentXp, myGame->p->nextLevel);
-    printf("    \t\t| WEAPONS :\n");
+void printPlayer(game *myGame)
+{
+    printf("                ▛▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▜\n");
+    printf("                ▌        PLAYER STATS       ▐\n");
+    printf("                ▌                           ▐\n");
+    printf("                ▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟\n");
+    printf("    \t\t▌ HP           : %d/%d\n", myGame->p->currentHp, myGame->p->hp);
+    printf("    \t\t▌ PLAYER LEVEL : %d\n", myGame->p->level);
+    printf("    \t\t▌ EXPERIENCE   : %d/%d XP\n", myGame->p->currentXp, myGame->p->nextLevel);
+    printf("                ▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟\n");
+    printf("    \t\t▌ WEAPONS :\n");
     for(int i=0; i<3; i++)
     {
         if(myGame->p->activeWeapon == i)
         {
-            printf("    \t\t|     # %d ", i);
+            printf("    \t\t▌     # %d ", i);
         }
         else
         {
-            printf("    \t\t|       %d ", i);
+            printf("    \t\t▌       %d ", i);
         }
 
         printResource(myGame->p->weaponSet[i]->value);
         printf("\n");
         if(myGame->p->weaponSet[i]->value != _ESPACE_LIBRE)
-            printf("    \t\t|         DUR : %d   DMG : %d\n", myGame->p->weaponSet[i]->durability, myGame->p->weaponSet[i]->damage);
+            printf("    \t\t▌         DUR : %d   DMG : %d\n", myGame->p->weaponSet[i]->durability, myGame->p->weaponSet[i]->damage);
         else
-            printf("    \t\t|\n");
+            printf("    \t\t▌\n");
     }
-    printf("    \t\t| POSITION     : [%d, %d]\n", myGame->p->posX, myGame->p->posY);
-    printf("    \t\t| DIRECTION    : ");
+    printf("                ▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟\n");
+    printf("    \t\t▌ POSITION     : [%d, %d]\n", myGame->p->posX, myGame->p->posY);
+    printf("    \t\t▌ DIRECTION    : ");
     switch (myGame->p->direction)
     {
     case _NORTH_:
@@ -308,8 +322,8 @@ void printPlayer(game *myGame){
     default:
         break;
     }
-    printf("    \t\t| CURRENT MAP  : %d\n", myGame->p->currentMap);
-    printf("    \t\t| TARGET       : ");
+    printf("    \t\t▌ CURRENT MAP  : %d\n", myGame->p->currentMap);
+    printf("    \t\t▌ TARGET       : ");
     int targetXPos = findTargetXPos(myGame);
     int targetYPos = findTargetYPos(myGame);
     if(targetXPos >= 0 && targetXPos < myGame->mapSet[myGame->p->currentMap-1]->rows && targetYPos >= 0 && targetYPos < myGame->mapSet[myGame->p->currentMap-1]->cols){
@@ -336,10 +350,11 @@ void printPlayer(game *myGame){
         }
     }
     printf("\n");
-    printf("                \\___________________________/\n");
+    printf("                ▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟\n");
 }
 // PRINTING FUNCTION FOR THE CURRENT GAME MAP AND THE PLAYER STATS
-void printAll(game *myGame){
+void printAll(game *myGame)
+{
     assert(myGame);
     assert(myGame->p);
     assert(myGame->mapSet[myGame->p->currentMap-1]);
@@ -360,7 +375,8 @@ void printAll(game *myGame){
     // myGame->mapSet[currentMap - 1]   CORRESPONDS WITH THE POSITION OF THE CURRENT MAP IN THE MAPSET
 
 // MOVEUP FUNCTION -> FROM myGame->mapSet[currentMap]->map[x][y] TO myGame->mapSet[currentMap]->map[x - 1][y]
-void moveUp(game *myGame){
+void moveUp(game *myGame)
+{
     // CHECK IF PLAYER IS ORIENTED ON NORTH, IF NOT SET HIS DIRECTION ON
     if(myGame->p->direction != _NORTH_){
         myGame->p->direction = _NORTH_;
@@ -390,7 +406,8 @@ void moveUp(game *myGame){
 }
 
 // MOVEDOWN FUNCTION -> FROM myGame->mapSet[currentMap]->map[x][y] TO myGame->mapSet[currentMap]->map[x + 1][y]
-void moveDown(game *myGame){
+void moveDown(game *myGame)
+{
     // CHECK IF PLAYER IS ORIENTED ON SOUTH, IF NOT SET HIS DIRECTION ON
     if(myGame->p->direction != _SOUTH_){
         myGame->p->direction = _SOUTH_;
@@ -420,7 +437,8 @@ void moveDown(game *myGame){
 }
 
 // MOVELEFT FUNCTION -> FROM myGame->mapSet[currentMap]->map[x][y] TO myGame->mapSet[currentMap]->map[x][y - 1]
-void moveLeft(game *myGame){
+void moveLeft(game *myGame)
+{
         // CHECK IF PLAYER IS ORIENTED ON EAST, IF NOT SET HIS DIRECTION ON
     if(myGame->p->direction != _WEST_){
         myGame->p->direction = _WEST_;
@@ -450,7 +468,8 @@ void moveLeft(game *myGame){
 }
 
 // MOVERIGHT FUNCTION -> FROM myGame->mapSet[currentMap]->map[x][y] TO myGame->mapSet[currentMap]->map[x][y + 1]
-void moveRight(game *myGame){
+void moveRight(game *myGame)
+{
     // CHECK IF PLAYER IS ORIENTED ON WEST, IF NOT SET HIS DIRECTION ON
     if(myGame->p->direction != _EAST_){
         myGame->p->direction = _EAST_;
@@ -479,7 +498,8 @@ void moveRight(game *myGame){
     return;
 }
 
-int findTargetValueCase(game *myGame, int posX, int posY){
+int findTargetValueCase(game *myGame, int posX, int posY)
+{
     assert(myGame);
     assert(myGame->p);
     assert(myGame->mapSet);
@@ -491,7 +511,8 @@ int findTargetValueCase(game *myGame, int posX, int posY){
     return myGame->mapSet[myGame->p->currentMap-1]->map[posX][posY];
 }
 
-int findTargetXPos(game *myGame){
+int findTargetXPos(game *myGame)
+{
     assert(myGame);
     assert(myGame->p);
     assert(myGame->mapSet);
@@ -525,7 +546,8 @@ int findTargetXPos(game *myGame){
     }
 }
 
-int findTargetYPos(game *myGame){
+int findTargetYPos(game *myGame)
+{
     assert(myGame);
     assert(myGame->p);
     assert(myGame->mapSet);
@@ -559,7 +581,8 @@ int findTargetYPos(game *myGame){
     }
 }
 
-void farmResource(game *myGame, int caseValue, int posX, int posY){
+void farmResource(game *myGame, int caseValue, int posX, int posY)
+{
     assert(myGame);
     assert(myGame->p);
     assert(myGame->mapSet);
@@ -623,7 +646,8 @@ void farmResource(game *myGame, int caseValue, int posX, int posY){
 
 }
 
-void makeTp(game *myGame, int caseValue){
+void makeTp(game *myGame, int caseValue)
+{
     assert(myGame);
     assert(myGame->p);
     assert(myGame->mapSet);
@@ -681,7 +705,6 @@ void dealWithPNJ(game *myGame)
         printf("\n\n\nWhat can I do for you ?\n");
         printf("\t> Make crafting        - Press '1'\n");
         printf("\t> Repair my items      - Press '2'\n");
-        printf("\t> Drop items           - Press '3'\n");
         printf("\t> Nothing, resume game - Press 'x'\n");
 
         scanf("%s", input);
@@ -792,6 +815,7 @@ void dealWithPNJ(game *myGame)
         if(strcmp(input, "2") == 0)
         {
             repairAllDurability(myGame->p->inventory);
+            repairWeaponSetDurability(myGame->p->weaponSet);
             printf("Ok, it's done !\n");
             dealWithPNJ(myGame);
             break;
@@ -799,7 +823,206 @@ void dealWithPNJ(game *myGame)
     }
 }
 
-void makeAction(game *myGame){
+void printFight(player *p, monster *m)
+{
+    printf("▛▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▜\n");
+    printf("▌    FIGHTING    ▐\n");
+    printf("▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟\n");
+    printf("   ▛▀▀▀▀▀▀▀▀▀▀▜\n");
+    printf("   ▌PLAYER\n");
+    printf("   ▌%d/%dHP\n", p->currentHp, p->hp);
+    printf("   ▙▄▄▄▄▄▄▄▄▄▄▟\n");
+    printf("   ▛▀▀▀▀▀▀▀▀▀▀▜\n");
+    printf("   ▌MONSTER\n");
+    printf("   ▌%d/%dHP\n", m->hpCurrent, m->hpMax);
+    printf("   ▙▄▄▄▄▄▄▄▄▄▄▟\n\n");
+}
+
+void attack(player *p, monster *m)
+{
+    assert(p);
+    if(p->weaponSet[p->activeWeapon]->durability < 1)
+        return;
+    m->hpCurrent = m->hpCurrent - p->weaponSet[p->activeWeapon]->damage;
+    p->weaponSet[p->activeWeapon]->durability -= 1;
+}
+
+void consumePotion(player *p)
+{
+    int indexP1 = itemAlreadyPresent(p->inventory, _POTION_DE_VIE_1_);
+    int indexP2 = itemAlreadyPresent(p->inventory, _POTION_DE_VIE_2_);
+    int indexP3 = itemAlreadyPresent(p->inventory, _POTION_DE_VIE_3_);
+    if(indexP1 == indexP2 && indexP2 == indexP3 && indexP1 == -1){
+        printf("▌  You don't have potion\n\n");
+        return;
+    }
+    printf("▛▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▜\n");
+    printf("▌    DRINK POTION     ▐\n");
+    printf("▌    'c' > CANCEL     ▐\n");
+    printf("▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟\n");
+    if(indexP1 != -1)
+    {
+        printf("▌ [1]   ");
+        printResource(_POTION_DE_VIE_1_);
+        printf("\n");
+    }
+    if(indexP2 != -1)
+    {
+        printf("▌ [2]   ");
+        printResource(_POTION_DE_VIE_2_);
+        printf("\n");
+    }
+    if(indexP3 != -1)
+    {
+        printf("▌ [3]   ");
+        printResource(_POTION_DE_VIE_3_);
+        printf("\n");
+    }
+    printf("▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄\n\n");
+    printf("▌    Select with an id ('1', '2', '3')\n");
+    char input[50];
+    scanf("%s", input);
+    if(strcmp("1", input) != 0 && strcmp("2", input) != 0 && strcmp("3", input) != 0)
+    {
+        consumePotion(p);
+        return;
+    }
+    if(strcmp("1", input) == 0 && indexP1 != -1)
+    {
+        if(p->currentHp == p->hp)
+            return;
+        p->currentHp += p->inventory[indexP1]->healPt;
+        if(p->currentHp >= p->hp)
+            p->currentHp = p->hp;
+        delItem(p->inventory, indexP1);
+        return;
+    }
+    if(strcmp("2", input) == 0 && indexP2 != -1)
+    {
+        p->currentHp += p->inventory[indexP2]->healPt;
+        delItem(p->inventory, indexP2);
+        return;
+    }
+    if(strcmp("3", input) == 0 && indexP3 != -1)
+    {
+        p->currentHp += p->inventory[indexP3]->healPt;
+        delItem(p->inventory, indexP3);
+        return;
+    }
+}
+
+void changeWeapon(player *p)
+{
+    char input[50];
+    printWeaponSet(p);
+    printf("\n▌    Select a weapon with id ('0', '1', '2')\n");
+    scanf("%s", input);
+    if(strcmp("0", input)==0)
+    {
+        p->activeWeapon = 0;
+        return;
+    }
+    if(strcmp("1", input)==0)
+    {
+        p->activeWeapon = 1;
+        return;
+    }
+    if(strcmp("2", input)==0)
+    {
+        p->activeWeapon = 2;
+        return;
+    }
+    changeWeapon(p);
+}
+
+int escape()
+{
+    int r = rand()%100;
+    if(r <= 30)
+    {
+        return 1;
+    }
+    printf("  Escape failed\n");
+    return 0;
+}
+
+int fighting(game *myGame, int idMonster)
+{
+    assert(myGame->monsters[idMonster]);
+    printFight(myGame->p, myGame->monsters[idMonster]);
+    printf("▛▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▜\n");
+    printf("▌  'a' > ATTACK        ▐\n");
+    printf("▌  'c' > CHANGE WEAPON ▐   Active weapon : "); 
+    printResource(myGame->p->weaponSet[myGame->p->activeWeapon]->value);
+    printf(" (DUR:%d  DMG:%d)\n", myGame->p->weaponSet[myGame->p->activeWeapon]->durability, myGame->p->weaponSet[myGame->p->activeWeapon]->damage);
+    printf("▌  'd' > DRINK POTION  ▐\n");
+    printf("▌  'e' > ESCAPE        ▐\n");
+    printf("▙▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▟\n\n");
+    char input[50];
+    int esc = 0;
+    scanf("%s", input);
+    if(strcmp(input, "a")==0)
+    {
+        attack(myGame->p, myGame->monsters[idMonster]);
+        return 0;
+    }
+    if(strcmp(input, "c")==0)
+    {
+        changeWeapon(myGame->p);
+        return 0;
+    }
+    if(strcmp(input, "d")==0)
+    {
+        consumePotion(myGame->p);
+        return 0;
+    }
+    if(strcmp(input, "e")==0)
+    {
+        esc = escape(myGame, myGame->monsters[idMonster]);
+        return esc;
+    }
+    fighting(myGame, idMonster);
+    return 0;
+}
+
+void monsterAttacks(player *p, monster *m)
+{
+    if(m->hpCurrent <= 0)
+        return;
+    int damage = m->damage - (p->plastron->dmgResist * m->damage/100);
+    p->currentHp = p->currentHp - damage;
+    printf(" Monster attacks, you lost %dhp\n\n", damage);
+    return;
+}
+
+void fight(game *myGame, int posX, int posY, int caseValue)
+{
+    myGame->monsters[myGame->idLastMonster] = newMonster(caseValue);
+    myGame->monsters[myGame->idLastMonster]->currentMap = myGame->p->currentMap;
+    myGame->monsters[myGame->idLastMonster]->direction = myGame->p->direction%2 == 0 ? myGame->p->direction+1 : myGame->p->direction-1;
+    myGame->monsters[myGame->idLastMonster]->posX = posX;
+    myGame->monsters[myGame->idLastMonster]->posY = posY;
+    myGame->monsters[myGame->idLastMonster]->id = myGame->idLastMonster;
+
+    int escape = 0;
+
+    while(myGame->p->currentHp > 0 && myGame->monsters[myGame->idLastMonster]->hpCurrent > 0)
+    {
+        escape = fighting(myGame, myGame->monsters[myGame->idLastMonster]->id);
+        monsterAttacks(myGame->p, myGame->monsters[myGame->idLastMonster]);
+        if(escape == 1)
+          return;  
+    }
+    if(myGame->p->currentHp > 0)
+    {
+        myGame->p->currentXp = myGame->p->currentXp+caseValue;
+        updateXp(myGame->p);
+        myGame->mapSet[myGame->p->currentMap-1]->map[posX][posY] = 0;
+    }
+}
+
+void makeAction(game *myGame)
+{
     assert(myGame);
     int posX = findTargetXPos(myGame);
     int posY = findTargetYPos(myGame);
@@ -818,12 +1041,13 @@ void makeAction(game *myGame){
         return;
     
     case _IS_TP_CASE_ :
-        makeTp(myGame, caseValue);
         copyMapSet(myGame->lastMapSet, myGame->mapSet);
+        makeTp(myGame, caseValue);
         return;
     
     case _IS_MONSTER_CASE_ :
-        //fight(myGame, posX, posY);
+        copyMapSet(myGame->lastMapSet, myGame->mapSet);
+        fight(myGame, posX, posY, caseValue);
         return;
 
     case _PNJ_CASE_ :
@@ -835,7 +1059,8 @@ void makeAction(game *myGame){
     }
 }
 
-int caseValToItemVal(int caseValue){
+int caseValToItemVal(int caseValue)
+{
     switch (caseValue)
     {
     case _PLANT_1_:
@@ -950,7 +1175,8 @@ void updateDiffMapSetFrames(game *myGame)
     
 }
 
-void addWeapon(game *myGame, item **myInventory, int index){
+void addWeapon(game *myGame, item **myInventory, int index)
+{
     assert(myInventory);
     if(findType(myInventory[index]->value) != 'w')
         return;

@@ -22,6 +22,7 @@ typedef struct player{
 
 }player;
 
+player *newPlayer();
 void craftItem(player *p, int myCraftValue);
 int getNbOfPossibleCrafts(player *p);
 item **getPossibleCrafts(player *p);
@@ -29,7 +30,7 @@ void printCraftsList(player *p);
 void printInventory(player *p);
 void printWeaponSet(player *p);
 void freePlayer(player *p);
-player *newPlayer();
+void updateXp(player *p);
 
 // CREATE A NEW PLAYER
 player *newPlayer()
@@ -62,6 +63,49 @@ player *newPlayer()
     return p;
 }
 
+void updateXp(player *p)
+{
+    if(p->currentXp >= p->nextLevel)
+    {
+        p->level += 1;
+        p->currentXp = p->currentXp- p->nextLevel;
+        p->nextLevel = p->nextLevel*2;
+        switch (p->level)
+        {
+        case 2:
+            p->hp += 10;
+            break;
+        case 3:
+            p->hp += 20;
+            break;
+        case 4:
+            p->hp += 30;
+            break;
+        case 5:
+            p->hp += 40;
+            break;
+        case 6:
+            p->hp += 50;
+            break;
+        case 7:
+            p->hp += 50;
+            break;
+        case 8:
+            p->hp += 50;
+            break;
+        case 9:
+            p->hp += 75;
+            break;
+        case 10:
+            p->hp += 75;
+            break;
+        default:
+            break;
+        }
+        p->currentHp = p->hp;
+    }
+}
+
 void freePlayer(player *p)
 {
     assert(p);
@@ -74,7 +118,8 @@ void freePlayer(player *p)
     free(p);
 }
 
-void printWeaponSet(player *p){
+void printWeaponSet(player *p)
+{
     printf("                 ___________________________________________________\n");
     printf("                /                                                   \\\n");
     printf("                |                    WEAPON SET                     |\n");
@@ -411,8 +456,8 @@ item **getPossibleCrafts(player *p)
                 rocQty = getResourceQuantity(p->inventory, _DIAMANT_);
                 woodQty = getResourceQuantity(p->inventory, _CHENE_);
 
-                if(isThisRecipePossible(_DIAMANT_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
-                    addCraftToCraftsList(craftsList, _DIAMANT_);
+                if(isThisRecipePossible(_EPEE_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){
+                    addCraftToCraftsList(craftsList, _EPEE_EN_DIAMANT_);
                     i += 1;
                 }
                 if(isThisRecipePossible(_LANCE_EN_DIAMANT_, plantQty, rocQty, woodQty) == 1 && i < nbOfCraft){

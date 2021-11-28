@@ -1,26 +1,13 @@
+#ifndef ITEM_H
+#define ITEM_H
 #include "malloc_world.h"
 #include "resource.h"
 
-#ifndef ITEM_H
-#define ITEM_H
-#endif
-
-#ifndef _PLANT_INDEX_
 #define _PLANT_INDEX_ 0
-#endif
-#ifndef _ROC_INDEX_
 #define _ROC_INDEX_ 1
-#endif
-#ifndef _WOOD_INDEX_
 #define _WOOD_INDEX_ 2
-#endif
-
-#ifndef _RESOURCE_
 #define _RESOURCE_ 0
-#endif
-#ifndef _QUANTITY_
 #define _QUANTITY_ 1
-#endif
 
 typedef struct item{
     int value;
@@ -34,10 +21,33 @@ typedef struct item{
     int maxDurability;
 }item;
 
-void printItem(item *itm);
+item *createItem(int value, int qty);
+void freeItem(item *itm);
+item **initInventory();
+void freeInventory(item **myInventory);
+int itemAlreadyPresent(item **myInventory, int value);
+void addItem(item **myInventory, int value);
+void delItem(item** myInventory, int index);
+void freeWeaponSet(item **myWeaponSet);
+item **initWeaponSet();
+void delWeapon(item **myWeaponSet, int index);
+int findNextDurability(item *tool, int resourceValue);
+int indexToolNeeded(item **myInventory, int resourceValue);
+void repairWeaponSetDurability(item **myWeaponSet);
+void repairAllDurability(item **myInventory);
+int getResourceQuantity(item **myInventory, int resourceValue);
+int** getIngredientsNeeded(int myCraftValue);
+int isThisRecipePossible(int myCraftValue, int myPlantQty, int myRocQty, int myWoodQty);
+item **createCraftList(int length);
+void addCraftToCraftsList(item **myCraftsList, int myCraftValue);
+int craftAlreadyPresent(item **myCraftList, int myCraftValue, int length);
 void freeCraftsList(item **myCraftsList, int length);
+int isFullWeaponSet(item **myWeaponSet);
+int isFullInventory(item **myInventory);
+void updateResourceForCrafting(item **myInventory, int **myIngredients);
 
-item *createItem(int value, int qty){
+item *createItem(int value, int qty)
+{
     item *itm = malloc(sizeof(itm)+9*sizeof(int));
     assert(itm);
     itm->value = value;
@@ -53,12 +63,14 @@ item *createItem(int value, int qty){
     return itm;
 }
 
-void freeItem(item *itm){
+void freeItem(item *itm)
+{
     assert(itm);
     free(itm);
 }
 
-item **initInventory(){
+item **initInventory()
+{
     item **myInventory = malloc(10*sizeof(item *)+10*9*sizeof(int));
     assert(myInventory);
     
@@ -71,7 +83,8 @@ item **initInventory(){
     return myInventory;
 }
 
-void freeInventory(item **myInventory){
+void freeInventory(item **myInventory)
+{
     assert(myInventory);
     for(int i=0; i<10; i++){
         assert(myInventory[i]);
@@ -80,7 +93,8 @@ void freeInventory(item **myInventory){
     free(myInventory);
 }
 
-int itemAlreadyPresent(item **myInventory, int value){
+int itemAlreadyPresent(item **myInventory, int value)
+{
     assert(myInventory);
     for(int i=0; i<10; i++){
         assert(myInventory[i]);
@@ -91,7 +105,8 @@ int itemAlreadyPresent(item **myInventory, int value){
     return -1;
 }
 
-void addItem(item **myInventory, int value){
+void addItem(item **myInventory, int value)
+{
     assert(myInventory);
     int index = itemAlreadyPresent(myInventory, value);
     if(findType(value) != 'r' || index == -1){
@@ -116,7 +131,8 @@ void addItem(item **myInventory, int value){
     }
 }
 
-void delItem(item** myInventory, int index){
+void delItem(item** myInventory, int index)
+{
     assert(myInventory);
     if(myInventory[index]->quantity != 1 && myInventory[index]->quantity > 0){
         assert(myInventory[index]);
@@ -130,7 +146,8 @@ void delItem(item** myInventory, int index){
     }
 }
 
-void freeWeaponSet(item **myWeaponSet){
+void freeWeaponSet(item **myWeaponSet)
+{
     assert(myWeaponSet);
     for(int i=0; i<3; i++){
         assert(myWeaponSet[i]);
@@ -139,7 +156,8 @@ void freeWeaponSet(item **myWeaponSet){
     free(myWeaponSet);
 }
 
-item **initWeaponSet(){
+item **initWeaponSet()
+{
     item **myWeaponSet = malloc(3*sizeof(item *) + 3*9*sizeof(int));
     assert(myWeaponSet);
     for(int i=0; i<3; i++){
@@ -150,7 +168,8 @@ item **initWeaponSet(){
     return myWeaponSet;
 }
 
-void delWeapon(item **myWeaponSet, int index){
+void delWeapon(item **myWeaponSet, int index)
+{
 
     assert(myWeaponSet);
     free(myWeaponSet[index]);
@@ -159,7 +178,8 @@ void delWeapon(item **myWeaponSet, int index){
     return;
 }
 
-int findNextDurability(item *tool, int resourceValue){
+int findNextDurability(item *tool, int resourceValue)
+{
     if(resourceValue == _PIERRE_ || resourceValue == _SAPIN_ || resourceValue == _HERBE_){
         return (tool->durability - ( (tool->maxDurability) / 10));
     }
@@ -174,7 +194,8 @@ int findNextDurability(item *tool, int resourceValue){
     return -1;
 }
 
-int indexToolNeeded(item **myInventory, int resourceValue){
+int indexToolNeeded(item **myInventory, int resourceValue)
+{
     assert(myInventory);
     int index = -1;
     switch (resourceValue)
@@ -229,6 +250,16 @@ int indexToolNeeded(item **myInventory, int resourceValue){
         return index;
     }
     return index;
+}
+
+void repairWeaponSetDurability(item **myWeaponSet)
+{
+    assert(myWeaponSet);
+    for(int i=0; i<3; i++)
+    {
+        assert(myWeaponSet[i]);
+        myWeaponSet[i]->durability = myWeaponSet[i]->maxDurability;
+    }
 }
 
 void repairAllDurability(item **myInventory)
@@ -438,7 +469,8 @@ int isThisRecipePossible(int myCraftValue, int myPlantQty, int myRocQty, int myW
     return res;
 }
 
-item **createCraftList(int length){
+item **createCraftList(int length)
+{
     item **craftsList = malloc(length * sizeof(item *) + length * 9 * sizeof(int));
     assert(craftsList);
 
@@ -451,7 +483,8 @@ item **createCraftList(int length){
     return craftsList;
 }
 
-void addCraftToCraftsList(item **myCraftsList, int myCraftValue){
+void addCraftToCraftsList(item **myCraftsList, int myCraftValue)
+{
     assert(myCraftsList);
     for(int i=0; i<25; i++)
     {
@@ -465,7 +498,8 @@ void addCraftToCraftsList(item **myCraftsList, int myCraftValue){
     }
 }
 
-int craftAlreadyPresent(item **myCraftList, int myCraftValue, int length){
+int craftAlreadyPresent(item **myCraftList, int myCraftValue, int length)
+{
     assert(myCraftList);
     for(int i=0; i<length; i++){
         assert(myCraftList[i]);
@@ -535,3 +569,5 @@ void updateResourceForCrafting(item **myInventory, int **myIngredients)
     for(int p=0; p<myIngredients[_WOOD_INDEX_][_QUANTITY_]; p++)
         delItem(myInventory, idxBois);
 }
+
+#endif
