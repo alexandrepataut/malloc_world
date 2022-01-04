@@ -1,6 +1,6 @@
 #include "malloc_world.h"
 #include "game.h"
-//COMMENT
+
 // PRINTING FUNCTION FOR COMMANDS
 void printCommands()
 {
