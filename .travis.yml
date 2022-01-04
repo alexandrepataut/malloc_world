@@ -1,13 +1,12 @@
 language: c
- os:
-   - linux
+
+os:
+  - linux
 
 before_script:
-- sudo apt install build-essential
+  - sudo apt install build-essential
 
 compiler:
   - gcc
 
 script: make mallocWorld
-
-
